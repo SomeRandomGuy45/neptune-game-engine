@@ -2,4 +2,4 @@
 *.dylib
 *.so
 *.dll
-main
+test
