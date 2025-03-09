@@ -20,22 +20,22 @@ struct Color : Attribute {
     unsigned char r, g, b;
 };
 
-class Object2d {
+class Object {
 public:
-    Object2d() = default;
-    virtual ~Object2d() {}
+    Object() = default;
+    virtual ~Object() {}
     std::string name;
     std::vector<std::unique_ptr<Attribute>> attributes;
-    glm::vec2 position;
-    glm::vec2 size;
+    glm::vec3 position;
+    glm::vec3 size;
     std::vector<float> vertices;
     std::vector<float> indices;
     virtual void draw(GLFWwindow* window) const = 0;
 };
 
-class Box2d : public Object2d {
+class Box : public Object {
 public:
-    Box2d() : color(255, 255, 255) {
+    Box() : color(255, 255, 255) {
         vertices = {
             // Position (x, y, z)
             -0.5f, -0.5f, 0.0f, // Bottom left

@@ -10,7 +10,7 @@
 
 #include "objects.h"
 
-void neptune::Box2d::draw(GLFWwindow *window) const
+void neptune::Box::draw(GLFWwindow *window) const
 {
     if (!window) return;
     GLuint VAO, VBO, EBO;
@@ -18,4 +18,6 @@ void neptune::Box2d::draw(GLFWwindow *window) const
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
     glBindVertexArray(VAO);
+
+    // insert drawing logic soon enough ig
 }
