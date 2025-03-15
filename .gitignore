@@ -3,3 +3,4 @@
 *.so
 *.dll
 test
+/.vscode
