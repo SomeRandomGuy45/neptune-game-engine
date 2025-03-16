@@ -1,7 +1,7 @@
 # Define the source and output
 TARGET = neptuneSource
 TARGET2 = test
-SRC := $(wildcard *.cpp *.c)
+SRC := $(wildcard *.cpp *.c *.cc)
 
 # Platform detection
 UNAME_S := $(shell uname -s)
@@ -11,7 +11,8 @@ CXX = g++
 CXXFLAGS = --std=c++20 -lm
 
 # Libraries and frameworks
-LIBS = $(shell sdl2-config --cflags --libs)
+# Wont you want some ttf font files?
+LIBS = $(shell pkg-config --cflags --libs SDL2_image SDL2_ttf sdl2)
 
 # Platform-specific settings
 ifeq ($(UNAME_S), Linux)
