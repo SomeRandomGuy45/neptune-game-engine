@@ -16,18 +16,24 @@ void game_log(const std::string& message, neptune::LogLevel level) {
     switch (level) {
         case neptune::DEBUG:
             std::cout << BOLD(FYEL("[DEBUG] ")) << message << std::endl;
+            log_file << "[DEBUG] " << message << std::endl;
             break;
         case neptune::WARNING:
             std::cout << BOLD(FYEL("[WARNING] ")) << message << std::endl;
+            log_file << "[WARNING] " << message << std::endl;
             break;
         case neptune::ERROR:
             std::cerr << BOLD(FRED("[ERROR] ")) << message << std::endl;
+            log_file << "[ERROR] " << message << std::endl;
             break;
         case neptune::CRITICAL:
             std::cerr <<  BOLD(FRED("[CRITICAL] ")) << message << std::endl;
+            log_file << "[CRITICAL] " << message << std::endl;
+            log_file.close();
             exit(1); // exit the game if critical error
         default:
             std::cout << BOLD(FWHT("[INFO] ")) << message << std::endl;
+            log_file << "[INFO] " << message << std::endl;
     }
 
     log_file.close();
