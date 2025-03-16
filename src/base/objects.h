@@ -12,13 +12,14 @@ class Object {
 public:
     std::string name;
     virtual ~Object() = default;
-    virtual void render(SDL_Renderer* renderer) = 0;
+    virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) = 0;
 };
 
 class Box : public Object {
 public:
-    Box(int x, int y, int w, int h, SDL_Color color) : x(x), y(y), w(w), h(h), color(color) {};
-    void render(SDL_Renderer* renderer) override;
+    Box(int _x, int _y, int _w, int _h, SDL_Color _color)
+        : x(_x), y(_y), w(_w), h(_h), color(_color) {}
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
 private:
     int x, y, w, h;
     SDL_Color color;
