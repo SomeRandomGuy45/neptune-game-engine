@@ -8,7 +8,7 @@ namespace neptune {
 
     class Game {
     public:
-        void init(const std::string& winName = "Neptune Game");
+        void init(const std::string& winName = "Untitled Game");
         void addObject(std::unique_ptr<Object> obj) { objects.push_back(std::move(obj)); }
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
