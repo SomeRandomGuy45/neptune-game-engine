@@ -1,17 +1,30 @@
 #include "helper.h"
 
-#include <fstream>
 #include <filesystem>
+#include <ctime>
 
 namespace neptune {
 
-void game_log(const std::string& message, neptune::LogLevel level) {
-    std::ofstream log_file(neptune::currentLogPath);
+std::fstream log_file;
 
+void open_log_file() {
+    if (!std::filesystem::exists(neptune::currentLogPath)) {
+        std::ofstream file(neptune::currentLogPath);
+        file.close(); // Only create the file if it doesn't exist
+    }
+
+    log_file.open(neptune::currentLogPath, std::ios::app); // Open in append mode
     if (!log_file.is_open()) {
         std::cerr << "Failed to open log file: " << neptune::currentLogPath << std::endl;
         exit(1);
-    }    
+    }
+}
+
+void game_log(const std::string& message, neptune::LogLevel level) {
+
+    if (!log_file.is_open()) {
+        open_log_file();
+    }
 
     switch (level) {
         case neptune::DEBUG:
@@ -64,12 +77,9 @@ std::string getExecutablePath() {
 
 std::string get_current_logfile() {
     // get current date and time
-    time_t now = time(0);
-    tm* current_tm = localtime(&now);
+    std::time_t t = std::time(0);
 
-    std::string log_filename = "game_log_" + std::to_string(current_tm->tm_year + 1900) + "-" +
-                              std::to_string(current_tm->tm_mon + 1) + "-" +
-                              std::to_string(current_tm->tm_mday) + ".txt";
+    std::string log_filename = "game_log_" + std::to_string(t) + ".txt";
 
     std::string log_path = getExecutablePath();
     std::filesystem::path execDir = std::filesystem::path(log_path).parent_path();
