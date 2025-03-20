@@ -83,4 +83,30 @@ void Circle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     }
 }
 
+void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+{
+    if (texture == nullptr) {
+        SDL_Surface* loadedSurface = IMG_Load(filePath.c_str());
+        if (!loadedSurface) {
+            game_log("Couldn't as surface!" + std::string(SDL_GetError()), neptune::ERROR);
+            return;
+        }
+
+        texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
+        SDL_FreeSurface(loadedSurface);
+
+        if (!texture) {
+            game_log("Couldn't load texture!" + std::string(SDL_GetError()), neptune::ERROR);
+        }
+    }
+    
+    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    SDL_Rect renderRect = {renderX, renderY, w, h};
+    if (color.a != 0) {
+        SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
+        SDL_SetTextureAlphaMod(texture, color.a);
+    }
+    SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
+}
 } // namespace neptune

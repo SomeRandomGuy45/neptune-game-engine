@@ -45,5 +45,17 @@ private:
     SDL_Color color;
 };
 
+class Sprite : public Object {
+public:
+    Sprite(std::string _filePath, int _x, int _y, int _w, int _h) : filePath(_filePath), x(_x), y(_y), w(_w), h(_h) {}
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void setColor(SDL_Color newColor) { color = newColor; }
+private:
+    SDL_Texture* texture = nullptr;
+    SDL_Color color{0,0,0,0};
+    std::string filePath;
+    int x, y, w, h;
+};
+
 }
 #endif
