@@ -1,7 +1,8 @@
 # Define the source and output
 TARGET = neptuneSource
 TARGET2 = test
-SRC := $(wildcard *.cpp *.c *.cc)
+SRC := $(wildcard *.c *.cc)
+SRC2 := $(wildcard *.cpp *.c *.cc)
 
 # Platform detection
 UNAME_S := $(shell uname -s)
@@ -30,10 +31,10 @@ endif
 
 # Build target
 $(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) -o $(EXE) $(SRC) $(LIBS)
+	$(CXX) $(CXXFLAGS) -shared -o $(EXE) $(SRC) $(LIBS)
 
 test:
-	$(CXX) $(CXXFLAGS) -o $(EXE2) $(SRC) $(LIBS)
+	$(CXX) $(CXXFLAGS) -o $(EXE2) $(SRC2) $(LIBS)
 
 # Clean up the build
 clean:
