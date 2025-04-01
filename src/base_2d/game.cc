@@ -21,8 +21,6 @@ namespace neptune {
         }
         game_log("Made renderer");
         game_log("Game ready!");
-        game_log("Testing lua!");
-        main_lua_state.script_file("main.lua");
         bool quit = false;
         while (!quit) {
             SDL_Event e;

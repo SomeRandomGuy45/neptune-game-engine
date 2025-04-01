@@ -23,6 +23,21 @@ void Box::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     SDL_RenderFillRect(renderer, &rect);
 }
 
+void Box::SetMouseCallBack(sol::function func)
+{
+    /*
+    * This should clone the function
+    */
+    mouseCallBack = func;
+}
+
+void Box::DoMouseCallBack()
+{
+    if (mouseCallBack) {
+        mouseCallBack();
+    }
+}
+
 void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 {
     // we will need a different approach to this

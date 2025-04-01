@@ -1,0 +1,3 @@
+Look...
+
+Since we are still working on some stuff, if I get ideas I'll just put it here.
