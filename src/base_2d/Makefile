@@ -13,7 +13,7 @@ CXXFLAGS = --std=c++20 -lm
 
 # Libraries and frameworks
 # Wont you want some ttf font files?
-LIBS = $(shell pkg-config --cflags --libs SDL2_image SDL2_ttf sdl2)
+LIBS = $(shell pkg-config --cflags --libs SDL2_image SDL2_ttf sdl2) -llua
 
 # Platform-specific settings
 ifeq ($(UNAME_S), Linux)

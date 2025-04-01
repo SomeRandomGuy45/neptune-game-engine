@@ -103,7 +103,7 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
     int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
     SDL_Rect renderRect = {renderX, renderY, w, h};
-    if (color.a != 0) {
+    if (color.a != 0 || color.r != 0 || color.g != 0 || color.b != 0) {
         SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
         SDL_SetTextureAlphaMod(texture, color.a);
     }
