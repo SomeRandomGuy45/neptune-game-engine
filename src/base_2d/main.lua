@@ -1,5 +1,5 @@
 print("go!")
-local object = game.Workspace:getObject("moooo")  -- Get sprite by name
+local object = game.Workspace:getObject("hiiiii")  -- Get sprite by name
 local myColor = Color.new(255, 0, 255, 0)  -- Create red color
 print(object)
 function h()
