@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <thread>
 
 #include "sol/sol.hpp"
 #include "objects.h"

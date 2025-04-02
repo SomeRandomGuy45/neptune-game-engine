@@ -1,0 +1,6 @@
+{
+    "projectName" : "untitled game",
+    "default_scene" : "scene1",
+    "scenes" : ["scene1", "scene2", "scene3"],
+    "config_file" : "config.json"
+}

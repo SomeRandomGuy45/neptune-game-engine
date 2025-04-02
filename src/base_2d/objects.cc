@@ -124,4 +124,23 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     }
     SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
 }
+
+bool Box::isClicked(int mouseX, int mouseY) {
+    return (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+}
+
+bool Triangle::isClicked(int mouseX, int mouseY) {
+    return (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+}
+
+bool Circle::isClicked(int mouseX, int mouseY) {
+    int dx = mouseX - x;
+    int dy = mouseY - y;
+    return (dx * dx + dy * dy) <= (radius * radius);
+}
+
+bool Sprite::isClicked(int mouseX, int mouseY) {
+    return (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+}
+
 } // namespace neptune

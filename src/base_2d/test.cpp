@@ -4,6 +4,8 @@ int main(int argc, char **argv) {
     neptune::Game game;
     game.initLua();
     neptune::Box* boxTest = new neptune::Box(0, 0, 100, 100, SDL_Color{255, 255, 255, 255});
+    boxTest->setColor(SDL_Color{0, 255, 0, 1});
+    boxTest->name = "moooo";
     neptune::Triangle* triangleTest = new neptune::Triangle(100, 100, 100, 100, SDL_Color{255, 255, 255, 255});
     //neptune::Circle* circleTest = new neptune::Circle(-100, 100, 100, SDL_Color{255, 255, 255, 255});
     neptune::Sprite* spriteTest = new neptune::Sprite("image.png", 100, 100, 100, 100);

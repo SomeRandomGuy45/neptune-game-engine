@@ -21,12 +21,31 @@ namespace neptune {
         }
         game_log("Made renderer");
         game_log("Game ready!");
+        std::thread luaScriptThread([this](){
+            main_lua_state.script_file("main.lua");
+        });
+        luaScriptThread.detach();
         bool quit = false;
         while (!quit) {
             SDL_Event e;
             while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
+                }
+                if (e.type == SDL_MOUSEBUTTONDOWN) {
+                    int mouseX, mouseY;
+                    SDL_GetMouseState(&mouseX, &mouseY);
+                    std::cout << "Mouse: " << mouseX << " " << mouseY << "\n";
+                    for (const auto& [name, objVariant] : workspace.objects) {
+                        std::visit([this, mouseX, mouseY, name](auto& obj) {
+                            bool isClicked = obj->isClicked(mouseX, mouseY);
+                            if (isClicked) {
+                                std::cout << "Clicked: " << name << "\n";
+                            } else {
+                                std::cout << "Not clicked: " << name << "\n";
+                            }
+                        }, objVariant);
+                    }
                 }
             }
             render();
@@ -48,31 +67,44 @@ namespace neptune {
                     workspace.objects[newName] = std::move(objPtr);
                 }
             }
-        );      
+        );
         main_lua_state.new_usertype<Color>("Color",
             sol::constructors<Color(Uint8, Uint8, Uint8, Uint8)>(),
             "getR", &Color::getR, "setR", &Color::setR,
             "getG", &Color::getG, "setG", &Color::setG,
             "getB", &Color::getB, "setB", &Color::setB,
-            "getA", &Color::getA, "setA", &Color::setA
+            "getA", &Color::getA, "setA", &Color::setA,
+            "setFromTable", &Color::setFromTable
         );        
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
             sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),
-            "setColor", [](neptune::Object& self, Color color) {
+            "setColor", [](neptune::Sprite& self, Color color) {
                 self.setColor(color.toSDL());
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Box>("Box",
-            sol::constructors<neptune::Box(int, int, int, int, SDL_Color)>()
+            sol::constructors<neptune::Box(int, int, int, int, SDL_Color)>(),
+            "setColor", [](neptune::Box& self, Color color) {
+                self.setColor(color.toSDL());
+            },
+            sol::base_classes, sol::bases<neptune::Object>()
         );
 
         main_lua_state.new_usertype<neptune::Triangle>("Triangle",
-            sol::constructors<neptune::Triangle(int, int, int, int, SDL_Color)>()
+            sol::constructors<neptune::Triangle(int, int, int, int, SDL_Color)>(),
+            "setColor", [](neptune::Triangle& self, Color color) {
+                self.setColor(color.toSDL());
+            },
+            sol::base_classes, sol::bases<neptune::Object>()
         );
 
         main_lua_state.new_usertype<neptune::Circle>("Circle",
-            sol::constructors<neptune::Circle(int, int, int, SDL_Color)>()
+            sol::constructors<neptune::Circle(int, int, int, SDL_Color)>(),
+            "setColor", [](neptune::Circle& self, Color color) {
+                self.setColor(color.toSDL());
+            },
+            sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<Workspace>("Workspace",
             "getObject", [this](Workspace& ws, const std::string& name) -> sol::object {

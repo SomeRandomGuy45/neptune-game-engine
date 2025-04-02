@@ -28,7 +28,7 @@ public:
     void setG(Uint8 value) { g = value; }
     void setB(Uint8 value) { b = value; }
     void setA(Uint8 value) { a = value; }
-    void setAll(sol::table table) {
+    void setFromTable(sol::table table) {
         r = static_cast<Uint8>(table.get_or("r", 0));
         g = static_cast<Uint8>(table.get_or("g", 0));
         b = static_cast<Uint8>(table.get_or("b", 0));
@@ -43,19 +43,20 @@ public:
     virtual ~Object() = default;
     virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) = 0;
     void setName(const std::string& _name) { name = _name; }
-    virtual void setColor(SDL_Color newColor) = 0;
-};
+}; 
 
 class Box : public Object {
 public:
     Box(int _x, int _y, int _w, int _h, SDL_Color _color)
         : x(_x), y(_y), w(_w), h(_h), color(_color) {
-            name = "Box"; // Correct way to set the name
+            name = "Box";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
-    void setColor(SDL_Color newColor) override { color = newColor; }
+    void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoMouseCallBack();
+
+    bool isClicked(int mouseX, int mouseY);
 private:
     sol::function mouseCallBack;
     int x, y, w, h;
@@ -69,7 +70,8 @@ public:
             name = "Triangle";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
-    void setColor(SDL_Color newColor) override { color = newColor; }
+    void setColor(SDL_Color newColor) { color = newColor; }
+    bool isClicked(int mouseX, int mouseY);
 private:
     int x, y, w, h;
     SDL_Color color{0,0,0,0};
@@ -82,7 +84,8 @@ public:
             name = "Circle";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
-    void setColor(SDL_Color newColor) override { color = newColor; }
+    void setColor(SDL_Color newColor) { color = newColor; }
+    bool isClicked(int mouseX, int mouseY);
 private:
     int x, y, radius;
     SDL_Color color{0,0,0,0};
@@ -95,7 +98,8 @@ public:
             name = "Sprite";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
-    void setColor(SDL_Color newColor) override { color = newColor; }
+    void setColor(SDL_Color newColor) { color = newColor; }
+    bool isClicked(int mouseX, int mouseY);
 private:
     SDL_Texture* texture = nullptr;
     SDL_Color color{0,0,0,0};
