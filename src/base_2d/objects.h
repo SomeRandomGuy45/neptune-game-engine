@@ -3,11 +3,16 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <list>
 
 #include "helper.h"
 #include "sol/sol.hpp"
 
 namespace neptune {
+
+enum NEPTUNE_CALLBACK {
+    MOUSE = 0x00000001
+};
 
 class Color {
 public:
@@ -54,11 +59,11 @@ public:
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
-    void DoMouseCallBack();
+    void DoEventCallback(NEPTUNE_CALLBACK callback);
 
-    bool isClicked(int mouseX, int mouseY);
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
-    sol::function mouseCallBack;
+    std::list<sol::function> mouseCallbacks;
     int x, y, w, h;
     SDL_Color color{0,0,0,0};
 };
@@ -71,8 +76,12 @@ public:
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
     void setColor(SDL_Color newColor) { color = newColor; }
-    bool isClicked(int mouseX, int mouseY);
+    void SetMouseCallBack(sol::function func);
+    void DoEventCallback(NEPTUNE_CALLBACK callback);
+
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
+    std::list<sol::function> mouseCallbacks;
     int x, y, w, h;
     SDL_Color color{0,0,0,0};
 };
@@ -85,8 +94,12 @@ public:
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
     void setColor(SDL_Color newColor) { color = newColor; }
-    bool isClicked(int mouseX, int mouseY);
+    void SetMouseCallBack(sol::function func);
+    void DoEventCallback(NEPTUNE_CALLBACK callback);
+
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
+    std::list<sol::function> mouseCallbacks;
     int x, y, radius;
     SDL_Color color{0,0,0,0};
 };
@@ -99,8 +112,12 @@ public:
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
     void setColor(SDL_Color newColor) { color = newColor; }
-    bool isClicked(int mouseX, int mouseY);
+    void SetMouseCallBack(sol::function func);
+    void DoEventCallback(NEPTUNE_CALLBACK callback);
+
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
+    std::list<sol::function> mouseCallbacks;
     SDL_Texture* texture = nullptr;
     SDL_Color color{0,0,0,0};
     std::string filePath;

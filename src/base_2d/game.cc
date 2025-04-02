@@ -35,16 +35,16 @@ namespace neptune {
                 if (e.type == SDL_MOUSEBUTTONDOWN) {
                     int mouseX, mouseY;
                     SDL_GetMouseState(&mouseX, &mouseY);
-                    std::cout << "Mouse: " << mouseX << " " << mouseY << "\n";
                     for (const auto& [name, objVariant] : workspace.objects) {
-                        std::visit([this, mouseX, mouseY, name](auto& obj) {
-                            bool isClicked = obj->isClicked(mouseX, mouseY);
-                            if (isClicked) {
-                                std::cout << "Clicked: " << name << "\n";
-                            } else {
-                                std::cout << "Not clicked: " << name << "\n";
-                            }
+                        bool isClicked = false;
+                        std::visit([this, mouseX, mouseY, name, &isClicked](auto& obj) {
+                            isClicked = obj->isClicked(mouseX, mouseY, SCREEN_WIDTH, SCREEN_HEIGHT);
                         }, objVariant);
+                        if (isClicked) {
+                            std::visit([this](auto& obj) {
+                                obj->DoEventCallback(MOUSE);
+                            }, objVariant);
+                        }
                     }
                 }
             }
@@ -87,6 +87,9 @@ namespace neptune {
             sol::constructors<neptune::Box(int, int, int, int, SDL_Color)>(),
             "setColor", [](neptune::Box& self, Color color) {
                 self.setColor(color.toSDL());
+            },
+            "SetMouseCallBack", [](neptune::Box& self, sol::function func) {
+                self.SetMouseCallBack(func);
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );

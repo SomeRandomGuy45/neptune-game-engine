@@ -25,17 +25,25 @@ void Box::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 
 void Box::SetMouseCallBack(sol::function func)
 {
-    /*
-    * This should clone the function
-    */
-    mouseCallBack = func;
+    mouseCallbacks.push_back(func);
 }
 
-void Box::DoMouseCallBack()
+void Box::DoEventCallback(NEPTUNE_CALLBACK callback)
 {
-    if (mouseCallBack) {
-        mouseCallBack();
+    if (callback == MOUSE && !mouseCallbacks.empty()) {
+        for (const auto& callback : mouseCallbacks) {
+            callback();
+        }
     }
+    else {
+        game_log("Invalid callback type", neptune::WARNING);
+    }
+}
+
+bool Box::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
+    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
 void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
@@ -59,6 +67,49 @@ void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGH
     }
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderGeometry(renderer, nullptr, vertices, 3, nullptr, 0);
+}
+
+void Triangle::SetMouseCallBack(sol::function func)
+{
+    mouseCallbacks.push_back(func);
+}
+
+void Triangle::DoEventCallback(NEPTUNE_CALLBACK callback)
+{
+    if (callback == MOUSE && !mouseCallbacks.empty()) {
+        for (const auto& callback : mouseCallbacks) {
+            callback();
+        }
+    }
+    else {
+        game_log("Invalid callback type", neptune::WARNING);
+    }
+}
+
+bool Triangle::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
+    // Calculate triangle's screen coordinates
+    int x1 = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    int y1 = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    
+    int x2 = x1 + w;
+    int y2 = y1;
+    
+    int x3 = x1 + (w / 2);
+    int y3 = y1 - h;
+
+    // Function to calculate area of a triangle given three points
+    auto area = [](int x1, int y1, int x2, int y2, int x3, int y3) {
+        return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
+    };
+
+    // Compute areas
+    double A = area(x1, y1, x2, y2, x3, y3);  // Area of main triangle
+    double A1 = area(mouseX, mouseY, x2, y2, x3, y3); // Sub-triangle 1
+    double A2 = area(x1, y1, mouseX, mouseY, x3, y3); // Sub-triangle 2
+    double A3 = area(x1, y1, x2, y2, mouseX, mouseY); // Sub-triangle 3
+
+    // Check if sum of sub-triangle areas equals original triangle's area
+    return (A == (A1 + A2 + A3));
 }
 
 void Circle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
@@ -98,6 +149,31 @@ void Circle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     }
 }
 
+void Circle::SetMouseCallBack(sol::function func)
+{
+    mouseCallbacks.push_back(func);
+}
+
+void Circle::DoEventCallback(NEPTUNE_CALLBACK callback)
+{
+    if (callback == MOUSE && !mouseCallbacks.empty()) {
+        for (const auto& callback : mouseCallbacks) {
+            callback();
+        }
+    }
+    else {
+        game_log("Invalid callback type", neptune::WARNING);
+    }
+}
+
+bool Circle::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
+    float renderX = x + ((SCREEN_WIDTH / 2) - (radius));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (radius));
+    float dx = mouseX - renderX;
+    float dy = mouseY - renderY;
+    return (dx * dx + dy * dy) <= (radius * radius);
+}
+
 void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 {
     if (texture == nullptr) {
@@ -125,22 +201,27 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
 }
 
-bool Box::isClicked(int mouseX, int mouseY) {
-    return (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+void Sprite::SetMouseCallBack(sol::function func)
+{
+    mouseCallbacks.push_back(func);
 }
 
-bool Triangle::isClicked(int mouseX, int mouseY) {
-    return (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+void Sprite::DoEventCallback(NEPTUNE_CALLBACK callback)
+{
+    if (callback == MOUSE && !mouseCallbacks.empty()) {
+        for (const auto& callback : mouseCallbacks) {
+            callback();
+        }
+    }
+    else {
+        game_log("Invalid callback type", neptune::WARNING);
+    }
 }
 
-bool Circle::isClicked(int mouseX, int mouseY) {
-    int dx = mouseX - x;
-    int dy = mouseY - y;
-    return (dx * dx + dy * dy) <= (radius * radius);
-}
-
-bool Sprite::isClicked(int mouseX, int mouseY) {
-    return (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
+bool Sprite::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
+    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
 } // namespace neptune

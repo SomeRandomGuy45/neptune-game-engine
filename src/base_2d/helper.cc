@@ -20,7 +20,7 @@ void open_log_file() {
     }
 }
 
-void game_log(const std::string& message, neptune::LogLevel level) {
+void game_log(const std::string& message, neptune::NEPTUNE_LOGLEVEL level) {
 
     if (!log_file.is_open()) {
         open_log_file();

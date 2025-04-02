@@ -17,7 +17,7 @@
 
 namespace neptune {
 
-enum LogLevel {
+enum NEPTUNE_LOGLEVEL {
     DEFAULT,
     DEBUG,
     WARNING,
@@ -46,7 +46,7 @@ enum LogLevel {
 #define BOLD(x) "\x1B[1m" x RST
 #define UNDL(x) "\x1B[4m" x RST
 
-void game_log(const std::string& message, LogLevel level = DEFAULT);
+void game_log(const std::string& message, NEPTUNE_LOGLEVEL level = DEFAULT);
 
 std::string getExecutablePath();
 
