@@ -11,6 +11,9 @@ int main(int argc, char **argv) {
     neptune::Sprite* spriteTest = new neptune::Sprite("image.png", 100, 100, 100, 100);
     spriteTest->setColor(SDL_Color{255, 0, 0, 1});
     spriteTest->name = "hiiiii";
+    neptune::EventListener* listener = new neptune::EventListener();
+    listener->name = "listener";
+    game.addBaseObject(std::unique_ptr<neptune::EventListener>(listener));
     game.addObject(std::unique_ptr<neptune::Box>(boxTest));
     game.addObject(std::unique_ptr<neptune::Triangle>(triangleTest));
     game.addObject(std::unique_ptr<neptune::Sprite>(spriteTest));

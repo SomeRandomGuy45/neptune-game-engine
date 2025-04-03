@@ -41,6 +41,20 @@ public:
     }
 };
 
+class Vector2 {
+public:
+    float x, y;
+    Vector2(float _x, float _y) : 
+        x(_x), y(_y) {}
+    void setX(int _x) { x = _x; }
+    void setY(int _y) { y = _y; }
+    float getX() { return x;}
+    float getY() { return y;}
+    void setFromTable(sol::table table) {
+        x = static_cast<int>(table.get_or("x", 0));
+        y = static_cast<int>(table.get_or("y", 0));
+    }
+};
 
 class Object {
 public:
@@ -49,6 +63,25 @@ public:
     virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) = 0;
     void setName(const std::string& _name) { name = _name; }
 }; 
+
+// Non drawble objects
+class BaseObject {
+public:
+    std::string name;
+    virtual ~BaseObject() = default;
+    void setName(const std::string& _name) { name = _name; }
+};
+
+class EventListener : public BaseObject {
+public:
+    EventListener() {
+        name = "EventListener";
+    }
+    void AddListener(sol::function func);
+    void Fire(sol::variadic_args args);
+private:
+    std::list<sol::function> listeners;
+};
 
 class Box : public Object {
 public:

@@ -59,16 +59,30 @@ namespace neptune {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table);
         main_lua_state.new_usertype<neptune::Object>("Object",
             "setName", [this](neptune::Object& obj, const std::string& newName) {
-                auto it = workspace.objects.find(obj.name);
-                if (it != workspace.objects.end()) {
+                auto range = workspace.objects.equal_range(obj.name);
+                for (auto it = range.first; it != range.second; ++it) {
                     auto objPtr = std::move(it->second);
-                    workspace.objects.erase(it); 
-                    obj.name = newName;
-                    workspace.objects[newName] = std::move(objPtr);
+                    workspace.objects.erase(it);
+                    workspace.objects.emplace(newName, std::move(objPtr));
+                    break;
                 }
+                obj.name = newName; 
             }
         );
-        main_lua_state.new_usertype<Color>("Color",
+        
+        main_lua_state.new_usertype<neptune::BaseObject>("BaseObject", 
+            "setName", [this](neptune::BaseObject& obj, const std::string& newName) {
+                auto range = workspace.objects_base.equal_range(obj.name);
+                for (auto it = range.first; it != range.second; ++it) {
+                    auto objPtr = std::move(it->second);
+                    workspace.objects_base.erase(it);
+                    workspace.objects_base.emplace(newName, std::move(objPtr));
+                    break;
+                }
+                obj.name = newName;
+            }
+        );        
+        main_lua_state.new_usertype<neptune::Color>("Color",
             sol::constructors<Color(Uint8, Uint8, Uint8, Uint8)>(),
             "getR", &Color::getR, "setR", &Color::setR,
             "getG", &Color::getG, "setG", &Color::setG,
@@ -76,6 +90,21 @@ namespace neptune {
             "getA", &Color::getA, "setA", &Color::setA,
             "setFromTable", &Color::setFromTable
         );        
+        main_lua_state.new_usertype<neptune::Vector2>("Vector2",
+            sol::constructors<Vector2(float, float)>(),
+            "getX", &Vector2::getX, "setX", &Vector2::setX,
+            "getY", &Vector2::getY, "setY", &Vector2::setY,
+            "setFromTable", &Vector2::setFromTable
+        );
+        main_lua_state.new_usertype<neptune::EventListener>("EventListener",
+            sol::constructors<EventListener()>(),
+            "AddListener", [](neptune::EventListener& event, sol::function func) {
+                event.AddListener(func);
+            },
+            "Fire", [](neptune::EventListener& event, sol::variadic_args args) {
+                event.Fire(args);
+            }
+        );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
             sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),
             "setColor", [](neptune::Sprite& self, Color color) {
@@ -119,6 +148,15 @@ namespace neptune {
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<Workspace>("Workspace",
+            "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
+                auto objVariant = ws.getDrawObject(name);
+                if (objVariant) {
+                    return std::visit([this](auto& obj) {
+                        return sol::make_object(main_lua_state, obj.get());
+                    }, *objVariant);
+                }
+                return sol::lua_nil;
+            },
             "getObject", [this](Workspace& ws, const std::string& name) -> sol::object {
                 auto objVariant = ws.getObject(name);
                 if (objVariant) {

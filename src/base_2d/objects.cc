@@ -224,4 +224,16 @@ bool Sprite::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIG
     return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
+void EventListener::AddListener(sol::function func)
+{
+    listeners.push_back(func);
+}
+
+void EventListener::Fire(sol::variadic_args args)
+{
+    for (const auto& listener : listeners) {
+        listener(args);
+    }
+}
+
 } // namespace neptune
