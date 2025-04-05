@@ -107,7 +107,7 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
             sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),
-            "setColor", [](neptune::Sprite& self, Color color) {
+            "setColor", [](neptune::Sprite& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
             "SetMouseCallBack", [](neptune::Sprite& self, sol::function func) {
@@ -117,7 +117,7 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::Box>("Box",
             sol::constructors<neptune::Box(int, int, int, int, SDL_Color)>(),
-            "setColor", [](neptune::Box& self, Color color) {
+            "setColor", [](neptune::Box& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
             "SetMouseCallBack", [](neptune::Box& self, sol::function func) {
@@ -128,7 +128,7 @@ namespace neptune {
 
         main_lua_state.new_usertype<neptune::Triangle>("Triangle",
             sol::constructors<neptune::Triangle(int, int, int, int, SDL_Color)>(),
-            "setColor", [](neptune::Triangle& self, Color color) {
+            "setColor", [](neptune::Triangle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
             "SetMouseCallBack", [](neptune::Triangle& self, sol::function func) {
@@ -139,7 +139,7 @@ namespace neptune {
 
         main_lua_state.new_usertype<neptune::Circle>("Circle",
             sol::constructors<neptune::Circle(int, int, int, SDL_Color)>(),
-            "setColor", [](neptune::Circle& self, Color color) {
+            "setColor", [](neptune::Circle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
             "SetMouseCallBack", [](neptune::Circle& self, sol::function func) {
