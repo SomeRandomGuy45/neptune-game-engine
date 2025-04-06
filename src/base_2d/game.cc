@@ -6,6 +6,10 @@ namespace neptune {
             game_log("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
             exit(1);
         }
+        if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 1024) < 0) {
+            game_log("SDL_Mixer could not initialize! SDL_Error: " + std::string(Mix_GetError()), neptune::CRITICAL);
+            exit(1);
+        }
         window = SDL_CreateWindow("Neptune Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | flag_1 | flag_2);
         if(!window)
         {

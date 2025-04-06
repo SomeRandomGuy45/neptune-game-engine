@@ -3,6 +3,9 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
+
 #include <list>
 
 #include "helper.h"
@@ -12,6 +15,10 @@ namespace neptune {
 
 enum NEPTUNE_CALLBACK {
     MOUSE = 0x00000001
+};
+
+enum NEPTUNE_MUSIC_STATE {
+    PLAYING, STOPPED
 };
 
 class Color {
@@ -83,6 +90,28 @@ private:
     std::list<sol::function> listeners;
 };
 
+class Audio : public BaseObject {
+public:
+    Audio(std::string _path) {
+        music = Mix_LoadMUS(_path.c_str());
+        if (music == NULL) {
+            game_log("Couldn't load music! SDL Error: " + std::string(SDL_GetError()));
+        }
+        name = "Audio";
+    }
+    void Play();
+    void Stop();
+    void SetLoop(bool _loop);
+    /*
+    * With SDL_Mixer it's recommended to call Mix_FreeMusic()
+    * I'm going to trust the API with this.
+    */
+    ~Audio() override;
+private:
+    Mix_Music* music;
+    NEPTUNE_MUSIC_STATE music_state = STOPPED;
+    bool Loop = false;
+};
 class Box : public Object {
 public:
     Box(int _x, int _y, int _w, int _h, SDL_Color _color)

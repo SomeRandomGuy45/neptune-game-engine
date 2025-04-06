@@ -236,4 +236,28 @@ void EventListener::Fire(sol::variadic_args args)
     }
 }
 
+Audio::~Audio()
+{
+    if (music) {
+        Mix_FreeMusic(music);
+        music = NULL;
+    }
+}
+
+void Audio::Play() {
+    /*
+    * TODO!
+    */
+}
+
+void Audio::Stop() {
+    /*
+    * TODO!
+    */
+}
+
+void Audio::SetLoop(bool _loop) {
+    Loop = _loop;
+}
+
 } // namespace neptune
