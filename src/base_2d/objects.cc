@@ -236,28 +236,57 @@ void EventListener::Fire(sol::variadic_args args)
     }
 }
 
-Audio::~Audio()
-{
-    if (music) {
-        Mix_FreeMusic(music);
-        music = NULL;
-    }
-}
-
 void Audio::Play() {
-    /*
-    * TODO!
-    */
+    if (music_state != STOPPED) {
+        game_log("Audio is playing!", neptune::WARNING);
+        return;
+    }
+    if (!chunk) {
+        game_log("No audio loaded!", neptune::WARNING);
+        return;
+    }
+    if (channel == -2) {
+        game_log("Audio is gone!", neptune::ERROR);
+        return;
+    }
+    int num = loopAmount;
+    num = loop ? 0 : 1; // -1 to play indefinitely, 1 to play once
+    channel = Mix_PlayChannel(-1, chunk.get(), num - 1);
+    if (channel == -1) {
+        game_log("Error playing audio! " + std::string(Mix_GetError()), neptune::ERROR);
+        return;
+    }
+    music_state = PLAYING;
 }
 
 void Audio::Stop() {
-    /*
-    * TODO!
-    */
+    if (music_state != PLAYING) {
+        game_log("Audio is stopped!", neptune::WARNING);
+        return;
+    }
+    if (!chunk) {
+        game_log("No audio loaded!", neptune::WARNING);
+        return;
+    }
+    if (channel == -2) {
+        game_log("Audio is gone!", neptune::ERROR);
+        return;
+    }
+    Mix_Pause(channel);
+    music_state = STOPPED;
 }
 
 void Audio::SetLoop(bool _loop) {
-    Loop = _loop;
+    loop = _loop;
+}
+
+void Audio::Destroy() {
+    if (chunk) {
+        Mix_FreeChunk(chunk.release());
+        chunk = nullptr;
+    }
+    music_state = STOPPED;
+    channel = -2;
 }
 
 } // namespace neptune

@@ -14,7 +14,8 @@ namespace neptune {
                                       std::unique_ptr<neptune::Box>, 
                                       std::unique_ptr<neptune::Triangle>, 
                                       std::unique_ptr<neptune::Circle>>;
-    using BaseObjectVariant = std::variant<std::unique_ptr<neptune::EventListener>>;
+    using BaseObjectVariant = std::variant<std::unique_ptr<neptune::EventListener>,
+                                           std::unique_ptr<neptune::Audio>>;
 
     class Workspace {
     public:
@@ -38,6 +39,8 @@ namespace neptune {
             std::string objName = obj->name;
             if (auto event = dynamic_cast<neptune::EventListener*>(obj.get())) {
                 objects_base.emplace(objName, std::make_unique<neptune::EventListener>(std::move(*event)));
+            } else if (auto audio = dynamic_cast<neptune::Audio*>(obj.get())) {
+                objects_base.emplace(objName, std::make_unique<neptune::Audio>(std::move(*audio)));
             }
         }
 

@@ -61,6 +61,12 @@ namespace neptune {
     void Game::initLua()
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table);
+        main_lua_state.set_function("halt", [](int haltTime){
+            /*
+            * Multiply by 1000, since SDL_Delay uses ms to delay
+            */
+            SDL_Delay(haltTime * 1000);
+        });
         main_lua_state.new_usertype<neptune::Object>("Object",
             "setName", [this](neptune::Object& obj, const std::string& newName) {
                 auto range = workspace.objects.equal_range(obj.name);
@@ -108,6 +114,11 @@ namespace neptune {
             "Fire", [](neptune::EventListener& event, sol::variadic_args args) {
                 event.Fire(args);
             }
+        );
+        main_lua_state.new_usertype<neptune::Audio>("Audio",
+            sol::constructors<Audio(std::string)>(),
+            "Play", &Audio::Play,
+            "Stop", &Audio::Stop
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
             sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),

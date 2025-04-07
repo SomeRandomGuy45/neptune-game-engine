@@ -13,6 +13,9 @@ int main(int argc, char **argv) {
     spriteTest->name = "hiiiii";
     neptune::EventListener* listener = new neptune::EventListener();
     listener->name = "listener";
+    neptune::Audio* audio = new neptune::Audio("test.wav");
+    audio->name = "audio";
+    game.addBaseObject(std::unique_ptr<neptune::Audio>(audio));
     game.addBaseObject(std::unique_ptr<neptune::EventListener>(listener));
     game.addObject(std::unique_ptr<neptune::Box>(boxTest));
     game.addObject(std::unique_ptr<neptune::Triangle>(triangleTest));

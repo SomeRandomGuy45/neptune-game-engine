@@ -21,6 +21,8 @@ enum NEPTUNE_MUSIC_STATE {
     PLAYING, STOPPED
 };
 
+inline bool NEPTUNE_MUSIC_INIT = false;
+
 class Color {
 public:
     Uint8 r, g, b, a;
@@ -93,24 +95,30 @@ private:
 class Audio : public BaseObject {
 public:
     Audio(std::string _path) {
-        music = Mix_LoadMUS(_path.c_str());
-        if (music == NULL) {
-            game_log("Couldn't load music! SDL Error: " + std::string(SDL_GetError()));
+        if (!NEPTUNE_MUSIC_INIT) {
+            if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
+                game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::ERROR);
+            }
+            Mix_AllocateChannels(32);
+            NEPTUNE_MUSIC_INIT = true;
+        }
+        chunk.reset(Mix_LoadWAV(_path.c_str()));
+        if (!chunk.get()) {
+            game_log("Couldn't load music! SDL Error: " + std::string(SDL_GetError()), neptune::ERROR);
         }
         name = "Audio";
     }
     void Play();
     void Stop();
+    void Destroy();
     void SetLoop(bool _loop);
-    /*
-    * With SDL_Mixer it's recommended to call Mix_FreeMusic()
-    * I'm going to trust the API with this.
-    */
-    ~Audio() override;
 private:
-    Mix_Music* music;
+    std::unique_ptr<Mix_Chunk> chunk;
     NEPTUNE_MUSIC_STATE music_state = STOPPED;
-    bool Loop = false;
+    int channel = 0;
+    int freq = 44100;
+    int loopAmount = 1;
+    bool loop = false;
 };
 class Box : public Object {
 public:
