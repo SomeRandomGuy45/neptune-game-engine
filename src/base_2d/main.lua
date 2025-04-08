@@ -32,4 +32,6 @@ event:AddListener(function(...)
 end)
 
 -- Fire the event with some arguments
+halt(2)
+print("hi!!")
 event:Fire("Hello")
