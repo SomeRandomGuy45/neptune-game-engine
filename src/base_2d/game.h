@@ -13,7 +13,8 @@ namespace neptune {
     using ObjectVariant = std::variant<std::unique_ptr<neptune::Sprite>, 
                                       std::unique_ptr<neptune::Box>, 
                                       std::unique_ptr<neptune::Triangle>, 
-                                      std::unique_ptr<neptune::Circle>>;
+                                      std::unique_ptr<neptune::Circle>,
+                                      std::unique_ptr<neptune::Text>>;
     using BaseObjectVariant = std::variant<std::unique_ptr<neptune::EventListener>,
                                            std::unique_ptr<neptune::Audio>>;
 
@@ -32,6 +33,8 @@ namespace neptune {
                 objects.emplace(objName, std::make_unique<neptune::Triangle>(std::move(*triangle)));
             } else if (auto circle = dynamic_cast<neptune::Circle*>(obj.get())) {
                 objects.emplace(objName,std::make_unique<neptune::Circle>(std::move(*circle)));
+            } else if (auto text = dynamic_cast<neptune::Text*>(obj.get())) {
+                objects.emplace(objName,std::make_unique<neptune::Text>(std::move(*text)));
             }
         }
 

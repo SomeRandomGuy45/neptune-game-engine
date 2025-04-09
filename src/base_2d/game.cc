@@ -6,10 +6,6 @@ namespace neptune {
             game_log("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
             exit(1);
         }
-        if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 1, 1024) < 0) {
-            game_log("SDL_Mixer could not initialize! SDL_Error: " + std::string(Mix_GetError()), neptune::CRITICAL);
-            exit(1);
-        }
         window = SDL_CreateWindow("Neptune Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | flag_1 | flag_2);
         if(!window)
         {
@@ -53,6 +49,12 @@ namespace neptune {
                 }
             }
             render();
+        }
+        if (luaScriptThread.joinable()) {
+            luaScriptThread.join();
+        }
+        for (const auto& [name, font] : fonts) {
+            TTF_CloseFont(font);
         }
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
@@ -119,6 +121,15 @@ namespace neptune {
             sol::constructors<Audio(std::string)>(),
             "Play", &Audio::Play,
             "Stop", &Audio::Stop
+        );
+        main_lua_state.new_usertype<neptune::Text>("Text",
+            sol::constructors<neptune::Text(float, float, float, float, std::string)>(),
+            "changeText", [](neptune::Text& text, std::string newText){
+                text.changeText(newText);
+            },
+            "setColor", [](neptune::Text& self, neptune::Color color) {
+                self.setColor(color.toSDL());
+            }
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
             sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),

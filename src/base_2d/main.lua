@@ -1,13 +1,17 @@
 print("go!")
 local object = game.Workspace:getDrawObject("hiiiii")  -- Get sprite by name
+local textThing = game.Workspace:getDrawObject("myhappyguy")
 local event = game.Workspace:getObject("listener")
 local audio = game.Workspace:getObject("audio")
+print(textThing)
 print(audio)
 audio:Play()
 halt(2)
+textThing:setColor(Color.new(0, 0, 255, 0))
 audio:Stop()
 halt(2)
 audio:Play()
+textThing:changeText("Hello world guys!")
 print(event) 
 local myColor = Color.new(255, 255, 255, 0)  -- Create red color
 print(object)

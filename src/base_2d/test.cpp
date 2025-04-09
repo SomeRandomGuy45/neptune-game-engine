@@ -11,6 +11,8 @@ int main(int argc, char **argv) {
     neptune::Sprite* spriteTest = new neptune::Sprite("image.png", 100, 100, 100, 100);
     spriteTest->setColor(SDL_Color{255, 0, 0, 1});
     spriteTest->name = "hiiiii";
+    neptune::Text* textTest = new neptune::Text(-100, -100, 100, 100, "hi!");
+    textTest->name = "myhappyguy";
     neptune::EventListener* listener = new neptune::EventListener();
     listener->name = "listener";
     neptune::Audio* audio = new neptune::Audio("test.wav");
@@ -21,6 +23,7 @@ int main(int argc, char **argv) {
     game.addObject(std::unique_ptr<neptune::Triangle>(triangleTest));
     game.addObject(std::unique_ptr<neptune::Sprite>(spriteTest));
     game.addObject(std::unique_ptr<neptune::Circle>(circleTest));
+    game.addObject(std::unique_ptr<neptune::Text>(textTest));
     game.init();
     return 0;
 }

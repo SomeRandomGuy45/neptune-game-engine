@@ -22,6 +22,9 @@ enum NEPTUNE_MUSIC_STATE {
 };
 
 inline bool NEPTUNE_MUSIC_INIT = false;
+inline bool NEPTUNE_FONT_INIT = false;
+
+inline std::unordered_map<std::string, TTF_Font*> fonts;
 
 class Color {
 public:
@@ -120,9 +123,10 @@ private:
     int loopAmount = 1;
     bool loop = false;
 };
+
 class Box : public Object {
 public:
-    Box(int _x, int _y, int _w, int _h, SDL_Color _color)
+    Box(float _x, float _y, float _w, float _h, SDL_Color _color)
         : x(_x), y(_y), w(_w), h(_h), color(_color) {
             name = "Box";
     }
@@ -134,13 +138,13 @@ public:
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
     std::list<sol::function> mouseCallbacks;
-    int x, y, w, h;
+    float x, y, w, h;
     SDL_Color color{0,0,0,0};
 };
 
 class Triangle : public Object {
 public:
-    Triangle(int _x, int _y, int _w, int _h, SDL_Color _color)
+    Triangle(float _x, float _y, float _w, float _h, SDL_Color _color)
         : x(_x), y(_y), w(_w), h(_h), color(_color) {
             name = "Triangle";
     }
@@ -152,7 +156,7 @@ public:
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
     std::list<sol::function> mouseCallbacks;
-    int x, y, w, h;
+    float x, y, w, h;
     SDL_Color color{0,0,0,0};
 };
 
@@ -176,7 +180,7 @@ private:
 
 class Sprite : public Object {
 public:
-    Sprite(std::string _filePath, int _x, int _y, int _w, int _h)
+    Sprite(std::string _filePath, float _x, float _y, float _w, float _h)
         : filePath(_filePath), x(_x), y(_y), w(_w), h(_h) {
             name = "Sprite";
     }
@@ -187,13 +191,43 @@ public:
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
-    std::list<sol::function> mouseCallbacks;
     SDL_Texture* texture = nullptr;
     SDL_Color color{0,0,0,0};
+    std::list<sol::function> mouseCallbacks;
     std::string filePath;
-    int x, y, w, h;
+    float x, y, w, h;
 };
 
+class Text : public Object {
+public:
+    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 0}) : 
+        x(_x), y(_y), w(_w), h(_h), text_color(_text_color), text(_text), fontName(_fontName) {
+            if (!NEPTUNE_FONT_INIT) {
+                NEPTUNE_FONT_INIT = true;
+                if (TTF_Init() != 0) {
+                    game_log("Couldn't start TTF! Error:" + std::string(TTF_GetError()), neptune::CRITICAL);
+                    exit(1);
+                }
+                /*
+                * later on force a use of a assets folder
+                * something like assets/fonts, would work
+                */
+                fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
+            }
+            name = "Text";
+        };
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void setColor(SDL_Color newColor) { text_color = newColor; }
+    void changeText(std::string newText);
+    void DoEventCallback(NEPTUNE_CALLBACK callback);
+
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+private:
+    SDL_Color text_color;
+    SDL_Texture* texture = nullptr;
+    float x, y, w, h;
+    std::string text, fontName;
+};
 
 }
 #endif

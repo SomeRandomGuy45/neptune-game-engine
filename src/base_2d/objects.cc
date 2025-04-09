@@ -2,6 +2,79 @@
 
 namespace neptune {
 
+/*
+* BASEOBJECTS
+*/
+
+void EventListener::AddListener(sol::function func)
+{
+    listeners.push_back(func);
+}
+
+void EventListener::Fire(sol::variadic_args args)
+{
+    for (const auto& listener : listeners) {
+        listener(args);
+    }
+}
+
+void Audio::Play() {
+    if (music_state != STOPPED) {
+        game_log("Audio is playing!", neptune::WARNING);
+        return;
+    }
+    if (!chunk) {
+        game_log("No audio loaded!", neptune::WARNING);
+        return;
+    }
+    if (channel == -2) {
+        game_log("Audio is gone!", neptune::ERROR);
+        return;
+    }
+    int num = loopAmount;
+    num = loop ? 0 : 1; // -1 to play indefinitely, 1 to play once
+    channel = Mix_PlayChannel(-1, chunk.get(), num - 1);
+    if (channel == -1) {
+        game_log("Error playing audio! " + std::string(Mix_GetError()), neptune::ERROR);
+        return;
+    }
+    music_state = PLAYING;
+}
+
+void Audio::Stop() {
+    if (music_state != PLAYING) {
+        game_log("Audio is stopped!", neptune::WARNING);
+        return;
+    }
+    if (!chunk) {
+        game_log("No audio loaded!", neptune::WARNING);
+        return;
+    }
+    if (channel == -2) {
+        game_log("Audio is gone!", neptune::ERROR);
+        return;
+    }
+    Mix_Pause(channel);
+    music_state = STOPPED;
+}
+
+void Audio::SetLoop(bool _loop) {
+    loop = _loop;
+}
+
+void Audio::Destroy() {
+    if (chunk) {
+        Mix_FreeChunk(chunk.release());
+        chunk = nullptr;
+    }
+    music_state = STOPPED;
+    channel = -2;
+}
+
+/*
+* OBJECTS
+*/
+
 void Box::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 {
     /**
@@ -12,14 +85,14 @@ void Box::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     /*
      * https://stackoverflow.com/a/25481777
      */
-    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
-    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    float renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
 
     if (renderer == nullptr) {
         game_log("Renderer is null!!! This is not cool!", neptune::CRITICAL);
     }
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_Rect rect = {renderX, renderY, w, h};
+    SDL_Rect rect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
     SDL_RenderFillRect(renderer, &rect);
 }
 
@@ -41,8 +114,8 @@ void Box::DoEventCallback(NEPTUNE_CALLBACK callback)
 }
 
 bool Box::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
-    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
-    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    float renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
     return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
@@ -53,14 +126,12 @@ void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGH
     /*
      * https://stackoverflow.com/a/25481777
     */
-    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
-    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    float renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
     SDL_Vertex vertices[] = {
-        // cast this cast that
-        // why man why
-        {{static_cast<float>(renderX), static_cast<float>(renderY)}, color, {1, 1}},
-        {{static_cast<float>(renderX + w), static_cast<float>(renderY)}, color, {1, 1}},
-        {{static_cast<float>(renderX + w / 2), static_cast<float>(renderY - h)}, color, {1, 1}},
+        {{renderX, renderY}, color, {1, 1}},
+        {{renderX + w, renderY}, color, {1, 1}},
+        {{renderX + w / 2, renderY - h}, color, {1, 1}},
     };
     if (renderer == nullptr) {
         game_log("Renderer is null!!! This is not cool!", neptune::CRITICAL);
@@ -88,17 +159,17 @@ void Triangle::DoEventCallback(NEPTUNE_CALLBACK callback)
 
 bool Triangle::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
     // Calculate triangle's screen coordinates
-    int x1 = x + ((SCREEN_WIDTH / 2) - (w / 2));
-    int y1 = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    float x1 = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float y1 = y + ((SCREEN_HEIGHT / 2) - (h / 2));
     
-    int x2 = x1 + w;
-    int y2 = y1;
+    float x2 = x1 + w;
+    float y2 = y1;
     
-    int x3 = x1 + (w / 2);
-    int y3 = y1 - h;
+    float x3 = x1 + (w / 2);
+    float y3 = y1 - h;
 
     // Function to calculate area of a triangle given three points
-    auto area = [](int x1, int y1, int x2, int y2, int x3, int y3) {
+    auto area = [](float x1, float y1, float x2, float y2, float x3, float y3) {
         return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0);
     };
 
@@ -179,7 +250,7 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
     if (texture == nullptr) {
         SDL_Surface* loadedSurface = IMG_Load(filePath.c_str());
         if (!loadedSurface) {
-            game_log("Couldn't as surface!" + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
             return;
         }
 
@@ -187,18 +258,20 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
         SDL_FreeSurface(loadedSurface);
 
         if (!texture) {
-            game_log("Couldn't load texture!" + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
         }
     }
     
-    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
-    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
-    SDL_Rect renderRect = {renderX, renderY, w, h};
+    float renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    SDL_Rect renderRect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
     if (color.a != 0 || color.r != 0 || color.g != 0 || color.b != 0) {
         SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
         SDL_SetTextureAlphaMod(texture, color.a);
     }
     SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
+    SDL_DestroyTexture(texture);
+    texture = nullptr;
 }
 
 void Sprite::SetMouseCallBack(sol::function func)
@@ -219,74 +292,58 @@ void Sprite::DoEventCallback(NEPTUNE_CALLBACK callback)
 }
 
 bool Sprite::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT) {
-    int renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
-    int renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    float renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
     return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
-void EventListener::AddListener(sol::function func)
+void Text::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT)
 {
-    listeners.push_back(func);
+    if (texture == nullptr) {
+        if (fonts.count(fontName) == 0) {
+            game_log("Font doesn't exists!", neptune::ERROR);
+            return;
+        }
+        if (fonts[fontName] == NULL) {
+            game_log("Font is null!", neptune::ERROR);
+            return;
+        }
+        SDL_Surface* surface = TTF_RenderUTF8_Solid(fonts[fontName], text.c_str(), text_color);
+        if (!surface) {
+            game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
+            return;
+        }
+        texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+        if (!texture) {
+            game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
+        }
+    }   
+    float renderX = x + ((SCREEN_WIDTH / 2) - (w / 2));
+    float renderY = y + ((SCREEN_HEIGHT / 2) - (h / 2));
+    SDL_Rect renderRect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
+    SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
+    SDL_DestroyTexture(texture);
+    texture = nullptr;
 }
 
-void EventListener::Fire(sol::variadic_args args)
+void Text::changeText(std::string newText) {
+    text = newText;
+}
+
+/*
+* These 2 callbacks a required in the while loop
+* One easy way to get out of it is just return false
+*/
+
+void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
 {
-    for (const auto& listener : listeners) {
-        listener(args);
-    }
+    return;
 }
 
-void Audio::Play() {
-    if (music_state != STOPPED) {
-        game_log("Audio is playing!", neptune::WARNING);
-        return;
-    }
-    if (!chunk) {
-        game_log("No audio loaded!", neptune::WARNING);
-        return;
-    }
-    if (channel == -2) {
-        game_log("Audio is gone!", neptune::ERROR);
-        return;
-    }
-    int num = loopAmount;
-    num = loop ? 0 : 1; // -1 to play indefinitely, 1 to play once
-    channel = Mix_PlayChannel(-1, chunk.get(), num - 1);
-    if (channel == -1) {
-        game_log("Error playing audio! " + std::string(Mix_GetError()), neptune::ERROR);
-        return;
-    }
-    music_state = PLAYING;
-}
-
-void Audio::Stop() {
-    if (music_state != PLAYING) {
-        game_log("Audio is stopped!", neptune::WARNING);
-        return;
-    }
-    if (!chunk) {
-        game_log("No audio loaded!", neptune::WARNING);
-        return;
-    }
-    if (channel == -2) {
-        game_log("Audio is gone!", neptune::ERROR);
-        return;
-    }
-    Mix_Pause(channel);
-    music_state = STOPPED;
-}
-
-void Audio::SetLoop(bool _loop) {
-    loop = _loop;
-}
-
-void Audio::Destroy() {
-    if (chunk) {
-        Mix_FreeChunk(chunk.release());
-        chunk = nullptr;
-    }
-    music_state = STOPPED;
-    channel = -2;
+bool Text::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT)
+{
+    return false;
 }
 
 } // namespace neptune
