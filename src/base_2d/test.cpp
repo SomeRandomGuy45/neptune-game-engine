@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
     neptune::Sprite* spriteTest = new neptune::Sprite("image.png", 100, 100, 100, 100);
     spriteTest->setColor(SDL_Color{255, 0, 0, 1});
     spriteTest->name = "hiiiii";
-    neptune::Text* textTest = new neptune::Text(-100, -100, 100, 100, "hi!");
+    neptune::Text* textTest = new neptune::Text(-100, -100, 300, 300, "hello world!");
     textTest->name = "myhappyguy";
     neptune::EventListener* listener = new neptune::EventListener();
     listener->name = "listener";

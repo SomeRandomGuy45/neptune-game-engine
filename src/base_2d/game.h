@@ -2,7 +2,9 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <algorithm>
 #include <thread>
+#include <utility>
 
 #include "sol/sol.hpp"
 #include "objects.h"

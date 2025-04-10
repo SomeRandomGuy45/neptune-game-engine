@@ -124,6 +124,17 @@ private:
     bool loop = false;
 };
 
+class Script : public BaseObject {
+public:
+    Script() {
+        name = "Script";
+    }
+    
+    void saveToFile(std::string file);
+private:
+    std::string source;
+};
+
 class Box : public Object {
 public:
     Box(float _x, float _y, float _w, float _h, SDL_Color _color)
@@ -200,8 +211,8 @@ private:
 
 class Text : public Object {
 public:
-    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 0}) : 
-        x(_x), y(_y), w(_w), h(_h), text_color(_text_color), text(_text), fontName(_fontName) {
+    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 0}, SDL_Color _background_color = SDL_Color{.r = 0, .g = 0, .b = 0, .a = 0}) : 
+        x(_x), y(_y), w(_w), h(_h), text_color(_text_color), background_color(_background_color), text(_text), fontName(_fontName) {
             if (!NEPTUNE_FONT_INIT) {
                 NEPTUNE_FONT_INIT = true;
                 if (TTF_Init() != 0) {
@@ -213,17 +224,22 @@ public:
                 * something like assets/fonts, would work
                 */
                 fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
+                for (const auto& [name, font] : fonts) {
+                    TTF_SetFontHinting(font, TTF_HINTING_LIGHT_SUBPIXEL);
+                }
             }
             name = "Text";
         };
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
-    void setColor(SDL_Color newColor) { text_color = newColor; }
+    void setTextColor(SDL_Color newColor) { text_color = newColor; }
+    void setBackgroundColor(SDL_Color newColor) { background_color = newColor; }
     void changeText(std::string newText);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
 private:
     SDL_Color text_color;
+    SDL_Color background_color;
     SDL_Texture* texture = nullptr;
     float x, y, w, h;
     std::string text, fontName;

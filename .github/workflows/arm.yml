@@ -1,0 +1,38 @@
+name: ARM Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install xcode
+      run: |
+        xcode-select -p &> /dev/null
+        if [ $? -ne 0 ]; then
+          echo "[INFO] Command Line Tools for Xcode not found. Installing from softwareupdate…"
+          touch /tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+          PROD=$(softwareupdate -l | grep "\*.*Command Line" | tail -n 1 | sed 's/^[^C]* //')
+          softwareupdate -i "$PROD" --verbose
+        else
+          echo "[INFO] Command Line Tools for Xcode have been installed."
+        fi
+    - name: Install Homebrew and Required Libraries
+      run: |
+        NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        echo "[INFO] Installing Required Libraries"
+        brew install lua sdl2 sdl2_ttf sdl2_mixer sdl2_image pkg-config
+
+    - name: Build 2d
+      run: |
+        git clone https://github.com/SomeRandomGuy45/neptune-game-engine.git
+        cd neptune-game-engine/src/base_2d
+        make

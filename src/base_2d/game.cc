@@ -127,8 +127,11 @@ namespace neptune {
             "changeText", [](neptune::Text& text, std::string newText){
                 text.changeText(newText);
             },
-            "setColor", [](neptune::Text& self, neptune::Color color) {
-                self.setColor(color.toSDL());
+            "setTextColor", [](neptune::Text& self, neptune::Color color) {
+                self.setTextColor(color.toSDL());
+            },
+            "setBackgroundColor", [](neptune::Text& self, neptune::Color color) {
+                self.setBackgroundColor(color.toSDL());
             }
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
