@@ -5,7 +5,11 @@
 #include <algorithm>
 #include <thread>
 #include <utility>
+#include <zip.h>
 
+
+#include "json.hpp"
+#include "pugixml.hpp"
 #include "sol/sol.hpp"
 #include "objects.h"
 #include "helper.h"
@@ -76,6 +80,7 @@ namespace neptune {
         void addBaseObject(std::unique_ptr<neptune::BaseObject> obj) {
             workspace.addBaseObject(std::move(obj), main_lua_state);
         }
+        void loadGame(std::string gamePath);
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
         // SDL_WINDOW_FULLSCREEN and SDL_WINDOW_RESIZABLE are the only ones we can use
