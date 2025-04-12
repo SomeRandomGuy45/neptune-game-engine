@@ -84,9 +84,6 @@ std::string get_current_logfile() {
     std::string log_path = getExecutablePath();
     std::filesystem::path execDir = std::filesystem::path(log_path).parent_path();
     
-    // Move up one directory (remove executable's directory)
-    execDir = execDir.parent_path();
-    
     // Create logs path
     log_path = execDir.string();
     if (!std::filesystem::exists(log_path + "/logs")) {

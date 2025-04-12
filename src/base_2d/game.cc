@@ -204,6 +204,60 @@ namespace neptune {
         main_lua_state["game"] = this;
         game_log("Made Lua engine");
     }
+    void Game::loadGame(std::string gamePath)
+    {
+        zip_t* za;
+        zip_stat_t fileStat;
+        zip_file_t* file;
+        zip_error_t error;
+
+        std::string parentPath;
+        std::string lastParentPath;
+        std::string execDir = std::filesystem::path(getExecutablePath()).parent_path().string();
+        std::string folderPath = execDir + "/" + gamePath.substr(0, gamePath.length() - 4) + "/";
+
+        zip_stat_init(&fileStat);
+
+        int err;
+
+        std::filesystem::create_directory(folderPath);
+
+        if ((za = zip_open(gamePath.c_str(), 0, &err)) == NULL) {
+            zip_error_init_with_code(&error, err);
+            game_log("Cannot open place at: " + gamePath + "  Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
+            return;
+        }
+        for (zip_int64_t i = 0; i < zip_get_num_entries(za, ZIP_FL_UNCHANGED); i++) {
+            if (zip_stat_index(za, i, ZIP_FL_UNCHANGED, &fileStat) == -1) {
+                zip_error_init_with_code(&error, err);
+                game_log("Cannot get file state Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
+                return;
+            }
+            std::string fullOutputPath = folderPath + fileStat.name;
+            std::filesystem::path outputPath(fullOutputPath);
+            game_log("Extracting file: " + fullOutputPath);
+            std::cout << fileStat.name[strlen(fileStat.name) - 1] << " " << strlen(fileStat.name) << "\n";
+            if (outputPath.has_parent_path()) {
+                std::filesystem::create_directories(outputPath.parent_path());
+            }
+            if (fileStat.name[strlen(fileStat.name) - 1] == '/') {
+                std::filesystem::create_directories(fullOutputPath);
+                continue;
+            }
+            char* contents = new char[fileStat.size];
+            if ((file = zip_fopen_index(za, i, ZIP_FL_UNCHANGED)) == NULL) {
+                zip_error_init_with_code(&error, err);
+                game_log("Cannot get file Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
+                return;
+            }
+            zip_fread(file, contents, fileStat.size);
+            if (!std::ofstream(folderPath + std::string(fileStat.name)).write(contents, fileStat.size)) {
+                game_log("Cannot write file! with path: " + std::string(fileStat.name));
+                return;
+            }
+        }
+        zip_close(za);
+    }
     void Game::render()
     {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);

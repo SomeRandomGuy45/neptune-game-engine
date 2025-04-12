@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <thread>
 #include <utility>
+#include <filesystem>
+#include <sstream>
 #include <zip.h>
 
 

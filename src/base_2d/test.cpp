@@ -2,6 +2,7 @@
 
 int main(int argc, char **argv) {
     neptune::Game game;
+    game.loadGame("glad.zip");
     game.initLua();
     neptune::Box* boxTest = new neptune::Box(0, 0, 100, 100, SDL_Color{255, 255, 255, 255});
     boxTest->setColor(SDL_Color{0, 255, 0, 1});

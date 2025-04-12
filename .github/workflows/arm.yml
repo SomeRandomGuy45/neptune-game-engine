@@ -29,7 +29,7 @@ jobs:
       run: |
         NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         echo "[INFO] Installing Required Libraries"
-        brew install lua sdl2 sdl2_ttf sdl2_mixer sdl2_image pkg-config
+        brew install lua sdl2 sdl2_ttf sdl2_mixer sdl2_image pkg-config libzip
 
     - name: Build 2d
       run: |
