@@ -68,20 +68,30 @@ public:
     }
 };
 
-class Object {
-public:
-    std::string name;
-    virtual ~Object() = default;
-    virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) = 0;
-    void setName(const std::string& _name) { name = _name; }
-}; 
-
 // Non drawble objects
 class BaseObject {
 public:
     std::string name;
     virtual ~BaseObject() = default;
     void setName(const std::string& _name) { name = _name; }
+};
+
+class Camera : BaseObject {
+public:
+    Camera() {
+        name = "Camera";
+    }
+    float x = 0.0f;
+    float y = 0.0f;
+
+    void move(float dx, float dy) {
+        x += dx;
+        y += dy;
+    }
+    void setCamera(float dx, float dy) {
+        x = dx;
+        y = dy;
+    }
 };
 
 class EventListener : public BaseObject {
@@ -135,18 +145,27 @@ private:
     std::string source;
 };
 
+// Drawable objects
+class Object {
+public:
+    std::string name;
+    virtual ~Object() = default;
+    virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) = 0;
+    void setName(const std::string& _name) { name = _name; }
+}; 
+
 class Box : public Object {
 public:
     Box(float _x, float _y, float _w, float _h, SDL_Color _color)
         : x(_x), y(_y), w(_w), h(_h), color(_color) {
             name = "Box";
     }
-    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
-    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     std::list<sol::function> mouseCallbacks;
     float x, y, w, h;
@@ -159,12 +178,12 @@ public:
         : x(_x), y(_y), w(_w), h(_h), color(_color) {
             name = "Triangle";
     }
-    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
-    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     std::list<sol::function> mouseCallbacks;
     float x, y, w, h;
@@ -177,12 +196,12 @@ public:
         : x(_x), y(_y), radius(_radius), color(_color) {
             name = "Circle";
     }
-    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
-    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     std::list<sol::function> mouseCallbacks;
     int x, y, radius;
@@ -195,12 +214,12 @@ public:
         : filePath(_filePath), x(_x), y(_y), w(_w), h(_h) {
             name = "Sprite";
     }
-    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
-    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     SDL_Texture* texture = nullptr;
     SDL_Color color{0,0,0,0};
@@ -230,13 +249,13 @@ public:
             }
             name = "Text";
         };
-    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT) override;
+    void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setTextColor(SDL_Color newColor) { text_color = newColor; }
     void setBackgroundColor(SDL_Color newColor) { background_color = newColor; }
     void changeText(std::string newText);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
-    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT);
+    bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     SDL_Color text_color;
     SDL_Color background_color;

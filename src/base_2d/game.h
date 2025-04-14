@@ -7,6 +7,7 @@
 #include <utility>
 #include <filesystem>
 #include <sstream>
+#include <cctype>
 #include <zip.h>
 
 
@@ -26,49 +27,155 @@ namespace neptune {
     using BaseObjectVariant = std::variant<std::unique_ptr<neptune::EventListener>,
                                            std::unique_ptr<neptune::Audio>>;
 
+
+    enum Keycodes : unsigned char {
+        NUL = 0,   // Null
+        SOH = 1,   // Start of Header
+        STX = 2,   // Start of Text
+        ETX = 3,   // End of Text
+        EOT = 4,   // End of Transmission
+        ENQ = 5,   // Enquiry
+        ACK = 6,   // Acknowledge
+        BEL = 7,   // Bell
+        BS  = 8,   // Backspace
+        HT  = 9,   // Horizontal Tab
+        LF  = 10,  // Line Feed
+        VT  = 11,  // Vertical Tab
+        FF  = 12,  // Form Feed
+        CR  = 13,  // Carriage Return
+        SO  = 14,  // Shift Out
+        SI  = 15,  // Shift In
+        DLE = 16,  // Data Link Escape
+        DC1 = 17,  // Device Control 1
+        DC2 = 18,  // Device Control 2
+        DC3 = 19,  // Device Control 3
+        DC4 = 20,  // Device Control 4
+        NAK = 21,  // Negative Acknowledge
+        SYN = 22,  // Synchronous Idle
+        ETB = 23,  // End of Transmission Block
+        CAN = 24,  // Cancel
+        EM  = 25,  // End of Medium
+        SUB = 26,  // Substitute
+        ESC = 27,  // Escape
+        FS  = 28,  // File Separator
+        GS  = 29,  // Group Separator
+        RS  = 30,  // Record Separator
+        US  = 31,  // Unit Separator
+        SPACE = 32,
+        EXCLAMATION_MARK = 33,
+        DOUBLE_QUOTE = 34,
+        HASH = 35,
+        DOLLAR = 36,
+        PERCENT = 37,
+        AMPERSAND = 38,
+        SINGLE_QUOTE = 39,
+        LEFT_PAREN = 40,
+        RIGHT_PAREN = 41,
+        ASTERISK = 42,
+        PLUS = 43,
+        COMMA = 44,
+        HYPHEN = 45,
+        PERIOD = 46,
+        SLASH = 47,
+        DIGIT_0 = 48,
+        DIGIT_1 = 49,
+        DIGIT_2 = 50,
+        DIGIT_3 = 51,
+        DIGIT_4 = 52,
+        DIGIT_5 = 53,
+        DIGIT_6 = 54,
+        DIGIT_7 = 55,
+        DIGIT_8 = 56,
+        DIGIT_9 = 57,
+        COLON = 58,
+        SEMICOLON = 59,
+        LESS_THAN = 60,
+        EQUAL = 61,
+        GREATER_THAN = 62,
+        QUESTION_MARK = 63,
+        AT = 64,
+        A = 65,
+        B = 66,
+        C = 67,
+        D = 68,
+        E = 69,
+        F = 70,
+        G = 71,
+        H = 72,
+        I = 73,
+        J = 74,
+        K = 75,
+        L = 76,
+        M = 77,
+        N = 78,
+        O = 79,
+        P = 80,
+        Q = 81,
+        R = 82,
+        S = 83,
+        T = 84,
+        U = 85,
+        V = 86,
+        W = 87,
+        X = 88,
+        Y = 89,
+        Z = 90,
+        LEFT_BRACKET = 91,
+        BACKSLASH = 92,
+        RIGHT_BRACKET = 93,
+        CARET = 94,
+        UNDERSCORE = 95,
+        GRAVE_ACCENT = 96,
+        a = 97,
+        b = 98,
+        c = 99,
+        d = 100,
+        e = 101,
+        f = 102,
+        g = 103,
+        h = 104,
+        i = 105,
+        j = 106,
+        k = 107,
+        l = 108,
+        m = 109,
+        n = 110,
+        o = 111,
+        p = 112,
+        q = 113,
+        r = 114,
+        s = 115,
+        t = 116,
+        u = 117,
+        v = 118,
+        w = 119,
+        x = 120,
+        y = 121,
+        z = 122,
+        LEFT_BRACE = 123,
+        VERTICAL_BAR = 124,
+        RIGHT_BRACE = 125,
+        TILDE = 126,
+        DEL = 127
+    };
+    class InputService {
+    public:
+        void addToList(std::string keyInput, sol::function func);
+        std::list<sol::function> returnListFromKey(std::string key);
+    private:
+        std::unordered_map<std::string, std::list<sol::function>> keyList;
+    };
+
     class Workspace {
     public:
         std::unordered_multimap<std::string, ObjectVariant> objects;
         std::unordered_multimap<std::string, BaseObjectVariant> objects_base;
 
-        void addObject(std::unique_ptr<neptune::Object> obj, sol::state& lua) {
-            std::string objName = obj->name;
-            if (auto sprite = dynamic_cast<neptune::Sprite*>(obj.get())) {
-                objects.emplace(objName, std::make_unique<neptune::Sprite>(std::move(*sprite)));
-            } else if (auto box = dynamic_cast<neptune::Box*>(obj.get())) {
-                objects.emplace(objName, std::make_unique<neptune::Box>(std::move(*box)));
-            } else if (auto triangle = dynamic_cast<neptune::Triangle*>(obj.get())) {
-                objects.emplace(objName, std::make_unique<neptune::Triangle>(std::move(*triangle)));
-            } else if (auto circle = dynamic_cast<neptune::Circle*>(obj.get())) {
-                objects.emplace(objName,std::make_unique<neptune::Circle>(std::move(*circle)));
-            } else if (auto text = dynamic_cast<neptune::Text*>(obj.get())) {
-                objects.emplace(objName,std::make_unique<neptune::Text>(std::move(*text)));
-            }
-        }
+        void addObject(std::unique_ptr<neptune::Object> obj, sol::state& lua);
+        void addBaseObject(std::unique_ptr<neptune::BaseObject> obj, sol::state& lua);
 
-        void addBaseObject(std::unique_ptr<neptune::BaseObject> obj, sol::state& lua) {
-            std::string objName = obj->name;
-            if (auto event = dynamic_cast<neptune::EventListener*>(obj.get())) {
-                objects_base.emplace(objName, std::make_unique<neptune::EventListener>(std::move(*event)));
-            } else if (auto audio = dynamic_cast<neptune::Audio*>(obj.get())) {
-                objects_base.emplace(objName, std::make_unique<neptune::Audio>(std::move(*audio)));
-            }
-        }
-
-        ObjectVariant* getDrawObject(const std::string& name) {
-            auto it = objects.find(name);
-            if (it != objects.end()) {
-                return &it->second;
-            }
-            return nullptr;
-        }
-        BaseObjectVariant* getObject(const std::string& name) {
-            auto it = objects_base.find(name);
-            if (it!= objects_base.end()) {
-                return &it->second;
-            }
-            return nullptr;
-        }
+        ObjectVariant* getDrawObject(const std::string& name);
+        BaseObjectVariant* getObject(const std::string& name);
     };
 
     class Game {
@@ -93,6 +200,7 @@ namespace neptune {
         SDL_Window* window;
         SDL_Renderer* renderer;
         sol::state main_lua_state;
+        Camera camera;
     };
 
 } // namespace neptune
