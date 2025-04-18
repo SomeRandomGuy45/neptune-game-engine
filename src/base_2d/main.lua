@@ -1,4 +1,4 @@
-print("go!")
+print("go!", Enums.Keycodes.a)
 local object = game.Workspace:getDrawObject("hiiiii")  -- Get sprite by name
 local textThing = game.Workspace:getDrawObject("myhappyguy")
 local event = game.Workspace:getObject("listener")
@@ -20,8 +20,7 @@ if object then
     object:SetMouseCallBack(function()
         print("hello!")
         print("color change!")
-        local c = Color.new(0, 0, 255, 0)
-        object:setColor(c)
+        object:setColor(Color.new(0, 0, 255, 0))
     end)
     --object:SetMouseCallBack(h)
     print("did call back")
