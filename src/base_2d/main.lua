@@ -1,4 +1,7 @@
 print("go!", Enums.Keycodes.a)
+game.InputService:addKeybind(Enums.Keycodes.s, function ()
+    print("Pressed S key!")
+end)
 local object = game.Workspace:getDrawObject("hiiiii")  -- Get sprite by name
 local textThing = game.Workspace:getDrawObject("myhappyguy")
 local event = game.Workspace:getObject("listener")

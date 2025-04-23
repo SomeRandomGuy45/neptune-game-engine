@@ -160,10 +160,10 @@ namespace neptune {
     };
     class InputService {
     public:
-        void addToList(std::string keyInput, sol::function func);
-        std::list<sol::function> returnListFromKey(std::string key);
+        void addToList(unsigned char keyInput, sol::function func);
+        std::list<sol::function> returnListFromKey(unsigned char key);
     private:
-        std::unordered_map<std::string, std::list<sol::function>> keyList;
+        std::unordered_map<unsigned char, std::list<sol::function>> keyList;
     };
 
     class Workspace {
@@ -181,6 +181,7 @@ namespace neptune {
     class Game {
     public:
         Workspace workspace;
+        InputService inputService;
         void init(const std::string& winName = "Untitled Game");
         void initLua();
         void addObject(std::unique_ptr<neptune::Object> obj) {

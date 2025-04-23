@@ -1,7 +1,12 @@
 #include "game.h"
 
 namespace neptune {
-    std::list<sol::function> InputService::returnListFromKey(std::string key)
+    void InputService::addToList(unsigned char keyInput, sol::function func)
+    {
+        keyList[keyInput].push_back(func);
+    }
+
+    std::list<sol::function> InputService::returnListFromKey(unsigned char key)
     {
         if (keyList.count(key) != 0) {
             return keyList[key];
@@ -93,8 +98,9 @@ namespace neptune {
                     }
                 }
                 if (e.type == SDL_KEYDOWN) {
-                    std::string keyName = SDL_GetKeyName(e.key.keysym.sym);
-                    std::cout << keyName << " " << e.key.keysym.sym << "\n";
+                    for (const auto& callback : inputService.returnListFromKey(e.key.keysym.sym)) { 
+                        callback();
+                    }
                 }
             }
             render();
@@ -330,6 +336,9 @@ namespace neptune {
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
+        main_lua_state.new_usertype<InputService>("InputService",
+            "addKeybind", &InputService::addToList
+        );
         main_lua_state.new_usertype<Workspace>("Workspace",
             "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
                 auto objVariant = ws.getDrawObject(name);
@@ -359,6 +368,9 @@ namespace neptune {
         main_lua_state.new_usertype<Game>("Game",
             "Workspace", sol::property([](Game& g) -> Workspace& {
                 return g.workspace;
+            }),
+            "InputService", sol::property([](Game& g) -> InputService& {
+                return g.inputService;
             })
         );
         main_lua_state["game"] = this;
