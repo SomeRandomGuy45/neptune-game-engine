@@ -43,13 +43,13 @@ end)
 -- Fire the event with some arguments
 halt(2)
 game.Workspace:MoveCamera(1, 1)
+print("hi!!")
+event:Fire("Hello")
 local x, y = 0, 0
-while true do
+while (200 >= x and 200 >= y) do
     halt(0.1)
     game.Workspace:SetCamera(x, y)
     x = x + 0.1
     y = y + 0.1
     print(x, y)
 end
-print("hi!!")
-event:Fire("Hello")
