@@ -9,7 +9,7 @@ UNAME_S := $(shell uname -s)
 
 # Compiler and standard
 CXX = g++
-CXXFLAGS = --std=c++20 -lm
+CXXFLAGS = --std=c++20 -lm -Wall
 
 # Libraries and frameworks
 # Wont you want some ttf font files?

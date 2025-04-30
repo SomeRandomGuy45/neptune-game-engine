@@ -91,7 +91,7 @@ namespace neptune {
                             isClicked = obj->isClicked(mouseX, mouseY, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
                         }, objVariant);
                         if (isClicked) {
-                            std::visit([this](auto& obj) {
+                            std::visit([](auto& obj) {
                                 obj->DoEventCallback(MOUSE);
                             }, objVariant);
                         }

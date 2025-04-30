@@ -129,7 +129,6 @@ private:
     std::unique_ptr<Mix_Chunk> chunk;
     NEPTUNE_MUSIC_STATE music_state = STOPPED;
     int channel = 0;
-    int freq = 44100;
     int loopAmount = 1;
     bool loop = false;
 };
@@ -257,10 +256,10 @@ public:
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
-    SDL_Color text_color;
-    SDL_Color background_color;
     SDL_Texture* texture = nullptr;
     float x, y, w, h;
+    SDL_Color text_color;
+    SDL_Color background_color;
     std::string text, fontName;
 };
 
