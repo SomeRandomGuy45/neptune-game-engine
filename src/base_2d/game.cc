@@ -312,6 +312,10 @@ namespace neptune {
             "SetMouseCallBack", [](neptune::Box& self, sol::function func) {
                 self.SetMouseCallBack(func);
             },
+            "setPosition", [](neptune::Box& self, neptune::Vector2 vec_pos) {
+                std::cout << vec_pos.x << " " << vec_pos.y << "\n";
+                self.setPosition(vec_pos.x, vec_pos.y);
+            },
             sol::base_classes, sol::bases<neptune::Object>()
         );
 

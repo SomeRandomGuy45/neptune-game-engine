@@ -1,16 +1,45 @@
+-- Very messy but its testing grounds
+
 print("go!", Enums.Keycodes.a)
-game.InputService:addKeybind(Enums.Keycodes.s, function ()
-    print("Pressed S key!")
-end)
-game.InputService:addKeybind(Enums.Keycodes.s, function ()
-    print("Pressed S 2 key!")
-end)
 local object = game.Workspace:getDrawObject("hiiiii")  -- Get sprite by name
+local box = game.Workspace:getDrawObject("moooo")
 local textThing = game.Workspace:getDrawObject("myhappyguy")
 local event = game.Workspace:getObject("listener")
 local audio = game.Workspace:getObject("audio")
+local v_pos = Vector2.new(0, 0)
+print(v_pos)
 print(textThing)
 print(audio)
+if box then
+    game.InputService:addKeybind(Enums.Keycodes.w, function ()
+        print("w key")
+        v_pos:setY(v_pos:getY() - 2.5)
+        print("done!")
+        print(v_pos:getY())
+        box:setPosition(v_pos)
+    end)
+    game.InputService:addKeybind(Enums.Keycodes.s, function ()
+        print("s key")
+        v_pos:setY(v_pos:getY() + 2.5)
+        print("done!")
+        print(v_pos:getY())
+        box:setPosition(v_pos)
+    end)
+    game.InputService:addKeybind(Enums.Keycodes.a, function ()
+        print("a key")
+        v_pos:setX(v_pos:getX() - 2.5)
+        print("done!")
+        print(v_pos:getX())
+        box:setPosition(v_pos)
+    end)
+    game.InputService:addKeybind(Enums.Keycodes.d, function ()
+        print("d key")
+        v_pos:setX(v_pos:getX() + 2.5)
+        print("done!")
+        print(v_pos:getX())
+        box:setPosition(v_pos)
+    end)
+end
 audio:Play()
 halt(2)
 textThing:setTextColor(Color.new(0, 0, 255, 0))
@@ -45,6 +74,8 @@ halt(2)
 game.Workspace:MoveCamera(1, 1)
 print("hi!!")
 event:Fire("Hello")
+--[[
+
 local x, y = 0, 0
 while (200 >= x and 200 >= y) do
     halt(0.1)
@@ -52,4 +83,11 @@ while (200 >= x and 200 >= y) do
     x = x + 0.1
     y = y + 0.1
     print(x, y)
+end
+
+]]
+
+while true do
+    halt(0.1)
+    game.Workspace:SetCamera(v_pos:getX(), v_pos:getY()) 
 end

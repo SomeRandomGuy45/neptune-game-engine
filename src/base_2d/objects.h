@@ -58,13 +58,13 @@ public:
     float x, y;
     Vector2(float _x, float _y) : 
         x(_x), y(_y) {}
-    void setX(int _x) { x = _x; }
-    void setY(int _y) { y = _y; }
+    void setX(float _x) { x = _x; }
+    void setY(float _y) { y = _y; }
     float getX() { return x;}
     float getY() { return y;}
     void setFromTable(sol::table table) {
-        x = static_cast<int>(table.get_or("x", 0));
-        y = static_cast<int>(table.get_or("y", 0));
+        x = static_cast<float>(table.get_or("x", 0));
+        y = static_cast<float>(table.get_or("y", 0));
     }
 };
 
@@ -161,6 +161,10 @@ public:
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setColor(SDL_Color newColor) { color = newColor; }
+    /*
+    * we can just convert the Vector2 class to floats
+    */
+    void setPosition(float _x, float _y);
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 

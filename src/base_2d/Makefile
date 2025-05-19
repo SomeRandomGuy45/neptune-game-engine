@@ -1,8 +1,8 @@
 # Define the source and output
-TARGET = neptuneSource
+TARGET = libneptuneSource
 TARGET2 = test
 SRC := $(wildcard *.c *.cc)
-SRC2 := $(wildcard *.cpp *.c *.cc)
+SRC2 := $(wildcard *.cpp)
 
 # Platform detection
 UNAME_S := $(shell uname -s)
@@ -10,6 +10,7 @@ UNAME_S := $(shell uname -s)
 # Compiler and standard
 CXX = g++
 CXXFLAGS = --std=c++20 -lm -Wall
+CXXFLAGS_APP = --std=c++20 -lm -Wall
 
 # Libraries and frameworks
 # Wont you want some ttf font files?
@@ -20,21 +21,25 @@ ifeq ($(UNAME_S), Linux)
     EXE = $(TARGET).so
     EXE2 = $(TARGET2)
     CXXFLAGS += -Wl,-rpath,'$$ORIGIN'
-else ifeq ($(UNAME_S), Darwin)  # macOS
+    CXXFLAGS_APP += -Wl,-rpath,@loader_path
+else ifeq ($(UNAME_S), Darwin)
     EXE = $(TARGET).dylib
     EXE2 = $(TARGET2)
-else  # Windows
+    CXXFLAGS += -dynamiclib -install_name @rpath/$(TARGET).dylib
+    CXXFLAGS_APP += -Wl,-rpath,@loader_path
+else
     EXE = $(TARGET).dll
     EXE2 = $(TARGET2).exe
-    CXXFLAGS += -DGLFW_INCLUDE_NONE  # In case you need to avoid including OpenGL headers with GLFW
+    CXXFLAGS += -DGLFW_INCLUDE_NONE
 endif
 
 # Build target
-$(TARGET): $(SRC)
+main:
 	$(CXX) $(CXXFLAGS) -shared -o $(EXE) $(SRC) $(LIBS)
 
 test:
-	$(CXX) $(CXXFLAGS) -o $(EXE2) $(SRC2) $(LIBS)
+	$(CXX) $(CXXFLAGS_APP) -o $(TARGET2) $(SRC2) $(LIBS) -I. -L. -lneptuneSource
+	
 
 # Clean up the build
 clean:

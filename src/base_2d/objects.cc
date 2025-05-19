@@ -96,6 +96,17 @@ void Box::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Ca
     SDL_RenderFillRect(renderer, &rect);
 }
 
+/*
+* Really simple funtion here
+* Just give it some cool info and yeah
+*/
+
+void Box::setPosition(float _x, float _y)
+{
+    x = _x;
+    y = _y;
+}
+
 void Box::SetMouseCallBack(sol::function func)
 {
     mouseCallbacks.push_back(func);

@@ -1,4 +1,4 @@
-#include <base_2d/game.h>
+#include "game.h"
 
 int main(int argc, char **argv) {
     neptune::Game game;
