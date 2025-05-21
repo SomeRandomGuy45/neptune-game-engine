@@ -10,36 +10,6 @@ local v_pos = Vector2.new(0, 0)
 print(v_pos)
 print(textThing)
 print(audio)
-if box then
-    game.InputService:addKeybind(Enums.Keycodes.w, function ()
-        print("w key")
-        v_pos:setY(v_pos:getY() - 2.5)
-        print("done!")
-        print(v_pos:getY())
-        box:setPosition(v_pos)
-    end)
-    game.InputService:addKeybind(Enums.Keycodes.s, function ()
-        print("s key")
-        v_pos:setY(v_pos:getY() + 2.5)
-        print("done!")
-        print(v_pos:getY())
-        box:setPosition(v_pos)
-    end)
-    game.InputService:addKeybind(Enums.Keycodes.a, function ()
-        print("a key")
-        v_pos:setX(v_pos:getX() - 2.5)
-        print("done!")
-        print(v_pos:getX())
-        box:setPosition(v_pos)
-    end)
-    game.InputService:addKeybind(Enums.Keycodes.d, function ()
-        print("d key")
-        v_pos:setX(v_pos:getX() + 2.5)
-        print("done!")
-        print(v_pos:getX())
-        box:setPosition(v_pos)
-    end)
-end
 audio:Play()
 halt(2)
 textThing:setTextColor(Color.new(0, 0, 255, 0))
@@ -52,12 +22,12 @@ local myColor = Color.new(255, 255, 255, 0)  -- Create red color
 print(object)
 if object then
     object:setColor(myColor)
-    object:SetMouseCallBack(function()
+    object:setMouseCallBack(function()
         print("hello!")
         print("color change!")
         object:setColor(Color.new(0, 0, 255, 0))
     end)
-    --object:SetMouseCallBack(h)
+    --object:setMouseCallBack(h)
     print("did call back")
 end
 
@@ -86,6 +56,20 @@ while (200 >= x and 200 >= y) do
 end
 
 ]]
+
+local moveMap = {
+    [Enums.Keycodes.w] = function() v_pos:setY(v_pos:getY() - 2.5) end,
+    [Enums.Keycodes.s] = function() v_pos:setY(v_pos:getY() + 2.5) end,
+    [Enums.Keycodes.a] = function() v_pos:setX(v_pos:getX() - 2.5) end,
+    [Enums.Keycodes.d] = function() v_pos:setX(v_pos:getX() + 2.5) end,
+}
+
+for key, action in pairs(moveMap) do
+    game.InputService:addKeybind(key, function()
+        action()
+        object:setPosition(v_pos)
+    end)
+end
 
 while true do
     halt(0.1)

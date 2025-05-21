@@ -151,6 +151,12 @@ void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGH
     SDL_RenderGeometry(renderer, nullptr, vertices, 3, nullptr, 0);
 }
 
+void Triangle::setPosition(float _x, float _y)
+{
+    x = _x;
+    y = _y;
+}
+
 void Triangle::SetMouseCallBack(sol::function func)
 {
     mouseCallbacks.push_back(func);
@@ -231,6 +237,12 @@ void Circle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
     }
 }
 
+void Circle::setPosition(float _x, float _y)
+{
+    x = _x;
+    y = _y;
+}
+
 void Circle::SetMouseCallBack(sol::function func)
 {
     mouseCallbacks.push_back(func);
@@ -285,6 +297,12 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
     texture = nullptr;
 }
 
+void Sprite::setPosition(float _x, float _y)
+{
+    x = _x;
+    y = _y;
+}
+
 void Sprite::SetMouseCallBack(sol::function func)
 {
     mouseCallbacks.push_back(func);
@@ -336,6 +354,12 @@ void Text::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, C
     SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
     SDL_DestroyTexture(texture);
     texture = nullptr;
+}
+
+void Text::setPosition(float _x, float _y)
+{
+    x = _x;
+    y = _y;
 }
 
 void Text::changeText(std::string newText) {

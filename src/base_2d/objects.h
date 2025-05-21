@@ -182,6 +182,8 @@ public:
             name = "Triangle";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
@@ -200,6 +202,8 @@ public:
             name = "Circle";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
@@ -218,6 +222,8 @@ public:
             name = "Sprite";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
@@ -253,6 +259,8 @@ public:
             name = "Text";
         };
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    void setPosition(float _x, float _y);
     void setTextColor(SDL_Color newColor) { text_color = newColor; }
     void setBackgroundColor(SDL_Color newColor) { background_color = newColor; }
     void changeText(std::string newText);

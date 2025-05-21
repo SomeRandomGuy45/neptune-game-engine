@@ -13,6 +13,7 @@
 
 #include "json.hpp"
 #include "pugixml.hpp"
+#define SOL_ALL_SAFETIES_ON 1
 #include "sol/sol.hpp"
 #include "objects.h"
 #include "helper.h"
@@ -161,6 +162,7 @@ namespace neptune {
     class InputService {
     public:
         void addToList(unsigned char keyInput, sol::function func);
+        void clearList();
         std::list<sol::function> returnListFromKey(unsigned char key);
     private:
         std::unordered_map<unsigned char, std::list<sol::function>> keyList;
@@ -180,6 +182,8 @@ namespace neptune {
 
     class Game {
     public:
+        ~Game();
+
         Workspace workspace;
         InputService inputService;
         void init(const std::string& winName = "Untitled Game");

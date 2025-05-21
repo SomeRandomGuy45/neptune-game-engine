@@ -6,6 +6,10 @@ namespace neptune {
         keyList[keyInput].push_back(func);
     }
 
+    void InputService::clearList() {
+        keyList.clear();
+    }
+
     std::list<sol::function> InputService::returnListFromKey(unsigned char key)
     {
         if (keyList.count(key) != 0) {
@@ -15,6 +19,7 @@ namespace neptune {
     }
 
     void Workspace::addObject(std::unique_ptr<neptune::Object> obj, sol::state& lua) {
+        if (!obj) return;
         std::string objName = obj->name;
         if (auto sprite = dynamic_cast<neptune::Sprite*>(obj.get())) {
             objects.emplace(objName, std::make_unique<neptune::Sprite>(std::move(*sprite)));
@@ -29,6 +34,7 @@ namespace neptune {
         }
     }
     void Workspace::addBaseObject(std::unique_ptr<neptune::BaseObject> obj, sol::state& lua) {
+        if (!obj) return;
         std::string objName = obj->name;
         if (auto event = dynamic_cast<neptune::EventListener*>(obj.get())) {
             objects_base.emplace(objName, std::make_unique<neptune::EventListener>(std::move(*event)));
@@ -50,7 +56,9 @@ namespace neptune {
         }
         return nullptr;
     }
-
+    Game::~Game() {
+        main_lua_state = sol::state();
+    }
     void Game::init(const std::string& winName ) {
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
             game_log("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
@@ -82,19 +90,43 @@ namespace neptune {
                 if (e.type == SDL_QUIT) {
                     quit = true;
                 }
+                if (e.type == SDL_WINDOWEVENT) {
+                    if (e.window.event == SDL_WINDOWEVENT_CLOSE) {
+                        game_log("Got window close event!");
+                        for (const auto& [name, font] : fonts) {
+                            TTF_CloseFont(font);
+                        }
+                        if (luaScriptThread.joinable()) {
+                            luaScriptThread.join();
+                        }
+                        game_log("Joined back thread!");
+                        main_lua_state = sol::state();
+                        workspace.objects.clear();
+                        workspace.objects_base.clear();
+                        inputService.clearList();
+                        SDL_DestroyRenderer(renderer);
+                        SDL_DestroyWindow(window);
+                        SDL_Quit();
+                        game_log("Finished!");
+                    }
+                }
                 if (e.type == SDL_MOUSEBUTTONDOWN) {
                     int mouseX, mouseY;
                     SDL_GetMouseState(&mouseX, &mouseY);
                     for (const auto& [name, objVariant] : workspace.objects) {
                         bool isClicked = false;
-                        std::visit([this, mouseX, mouseY, name, &isClicked](auto& obj) {
-                            isClicked = obj->isClicked(mouseX, mouseY, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
-                        }, objVariant);
+                        std::visit([this, mouseX, mouseY, name, &isClicked](auto& objPtr) {
+                            if (objPtr) {
+                                isClicked = objPtr->isClicked(mouseX, mouseY, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
+                            }
+                        }, objVariant);                        
                         if (isClicked) {
-                            std::visit([](auto& obj) {
-                                obj->DoEventCallback(MOUSE);
+                            std::visit([](auto& objPtr) {
+                                if (objPtr) {
+                                    objPtr->DoEventCallback(MOUSE);
+                                }
                             }, objVariant);
-                        }
+                        }                        
                     }
                 }
                 if (e.type == SDL_KEYDOWN) {
@@ -111,6 +143,10 @@ namespace neptune {
         for (const auto& [name, font] : fonts) {
             TTF_CloseFont(font);
         }
+        main_lua_state = sol::state();
+        workspace.objects.clear();
+        workspace.objects_base.clear();
+        inputService.clearList();
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -284,6 +320,14 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::Text>("Text",
             sol::constructors<neptune::Text(float, float, float, float, std::string)>(),
+            "setPosition", [](neptune::Text& self, sol::object maybe_vec) {
+                if (maybe_vec.is<neptune::Vector2>()) {
+                    neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
+                    self.setPosition(vec.x, vec.y);
+                } else {
+                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                }
+            },
             "changeText", [](neptune::Text& text, std::string newText){
                 text.changeText(newText);
             },
@@ -299,8 +343,16 @@ namespace neptune {
             "setColor", [](neptune::Sprite& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "SetMouseCallBack", [](neptune::Sprite& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Sprite& self, sol::function func) {
                 self.SetMouseCallBack(func);
+            },
+            "setPosition", [](neptune::Sprite& self, sol::object maybe_vec) {
+                if (maybe_vec.is<neptune::Vector2>()) {
+                    neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
+                    self.setPosition(vec.x, vec.y);
+                } else {
+                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                }
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
@@ -309,12 +361,16 @@ namespace neptune {
             "setColor", [](neptune::Box& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "SetMouseCallBack", [](neptune::Box& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Box& self, sol::function func) {
                 self.SetMouseCallBack(func);
             },
-            "setPosition", [](neptune::Box& self, neptune::Vector2 vec_pos) {
-                std::cout << vec_pos.x << " " << vec_pos.y << "\n";
-                self.setPosition(vec_pos.x, vec_pos.y);
+            "setPosition", [](neptune::Box& self, sol::object maybe_vec) {
+                if (maybe_vec.is<neptune::Vector2>()) {
+                    neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
+                    self.setPosition(vec.x, vec.y);
+                } else {
+                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                }
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
@@ -324,8 +380,16 @@ namespace neptune {
             "setColor", [](neptune::Triangle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "SetMouseCallBack", [](neptune::Triangle& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Triangle& self, sol::function func) {
                 self.SetMouseCallBack(func);
+            },
+            "setPosition", [](neptune::Triangle& self, sol::object maybe_vec) {
+                if (maybe_vec.is<neptune::Vector2>()) {
+                    neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
+                    self.setPosition(vec.x, vec.y);
+                } else {
+                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                }
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
@@ -335,8 +399,16 @@ namespace neptune {
             "setColor", [](neptune::Circle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "SetMouseCallBack", [](neptune::Circle& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Circle& self, sol::function func) {
                 self.SetMouseCallBack(func);
+            },
+            "setPosition", [](neptune::Circle& self, sol::object maybe_vec) {
+                if (maybe_vec.is<neptune::Vector2>()) {
+                    neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
+                    self.setPosition(vec.x, vec.y);
+                } else {
+                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                }
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
@@ -439,9 +511,11 @@ namespace neptune {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         for (const auto& [name, objVariant] : workspace.objects) {
-            std::visit([this](auto& obj) {
-                obj->render(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
-            }, objVariant);
+            std::visit([this](auto& objPtr) {
+                if (objPtr) {
+                    objPtr->render(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
+                }
+            }, objVariant);            
         }
         SDL_RenderPresent(renderer);
     }
