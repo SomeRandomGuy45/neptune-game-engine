@@ -16,6 +16,7 @@
 #define SOL_ALL_SAFETIES_ON 1
 #include "sol/sol.hpp"
 #include "objects.h"
+#include "gameLoaderHelper.h"
 #include "helper.h"
 
 namespace neptune {

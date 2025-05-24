@@ -500,11 +500,14 @@ namespace neptune {
             }
             zip_fread(file, contents, fileStat.size);
             if (!std::ofstream(folderPath + std::string(fileStat.name)).write(contents, fileStat.size)) {
-                game_log("Cannot write file! with path: " + std::string(fileStat.name));
+                game_log("Cannot write file! with path: " + std::string(fileStat.name), neptune::ERROR);
                 return;
             }
         }
         zip_close(za);
+        if (!isVaildGame(folderPath)) {
+            game_log("Unable to load place! Reason: Is not vaild game!", neptune::ERROR);
+        }
     }
     void Game::render()
     {

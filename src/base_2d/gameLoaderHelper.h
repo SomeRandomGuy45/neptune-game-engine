@@ -2,6 +2,9 @@
 #define gameLoaderHelper
 
 #include <string>
+#include <filesystem>
+
+#include "helper.h"
 
 namespace neptune {
 
