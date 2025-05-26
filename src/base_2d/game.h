@@ -206,6 +206,7 @@ namespace neptune {
         SDL_Window* window;
         SDL_Renderer* renderer;
         sol::state main_lua_state;
+        std::vector<sol::function> updateFuncs;
         Camera camera;
     };
 

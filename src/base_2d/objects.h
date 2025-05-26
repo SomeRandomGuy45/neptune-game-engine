@@ -115,7 +115,10 @@ public:
             Mix_AllocateChannels(32);
             NEPTUNE_MUSIC_INIT = true;
         }
-        chunk.reset(Mix_LoadWAV(_path.c_str()));
+        std::string execPath = getExecutablePath();
+        std::string execDir = std::filesystem::path(execPath).parent_path().string();
+        std::string newPath = execDir + "/assets/audio/" + _path;
+        chunk.reset(Mix_LoadWAV(newPath.c_str()));
         if (!chunk.get()) {
             game_log("Couldn't load music! SDL Error: " + std::string(SDL_GetError()), neptune::ERROR);
         }
@@ -218,7 +221,10 @@ private:
 class Sprite : public Object {
 public:
     Sprite(std::string _filePath, float _x, float _y, float _w, float _h)
-        : filePath(_filePath), x(_x), y(_y), w(_w), h(_h) {
+        : x(_x), y(_y), w(_w), h(_h) {
+            std::string execPath = getExecutablePath();
+            std::filesystem::path execDir = std::filesystem::path(execPath).parent_path();
+            filePath = execDir.string() + "/assets/sprite_data/" + _filePath;
             name = "Sprite";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
@@ -251,7 +257,18 @@ public:
                 * later on force a use of a assets folder
                 * something like assets/fonts, would work
                 */
-                fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
+                std::string execPath = getExecutablePath();
+                std::string execDir = std::filesystem::path(execPath).parent_path().string();
+                game_log("Looking for fonts in: " + execDir + "/assets/fonts");
+                for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/fonts")) {
+                    if (dir.is_regular_file() && dir.path().extension() == ".ttf") {
+                        std::string fontName = dir.path().filename();
+                        fontName = fontName.substr(0, fontName.length() - 4);
+                        game_log("Loading file: " + fontName + " Dir: " + dir.path().string());
+                        fonts.insert({fontName, TTF_OpenFont(dir.path().c_str(), 24)});
+                    }
+                }
+                //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
                 for (const auto& [name, font] : fonts) {
                     TTF_SetFontHinting(font, TTF_HINTING_LIGHT_SUBPIXEL);
                 }
