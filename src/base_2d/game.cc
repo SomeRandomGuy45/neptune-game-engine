@@ -87,34 +87,47 @@ namespace neptune {
         */
         std::string execPath = getExecutablePath();
         std::string execDir = std::filesystem::path(execPath).parent_path().string();
+        bool quit = false;
         game_log("Getting scripts from: " + execDir + "/assets/scripts");
-        for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
-            if (dir.is_regular_file() && dir.path().extension().string() == ".lua") {
-                game_log("Loading script: " + dir.path().filename().string());
-                sol::load_result script = main_lua_state.load_file(dir.path().string());
-                if (!script.valid()) {
-                    continue;
+        std::thread initThread([&]() {
+            for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
+                if (dir.is_regular_file() && dir.path().extension().string() == ".lua") {
+                    game_log("Loading script: " + dir.path().filename().string());
+                    sol::load_result script = main_lua_state.load_file(dir.path().string());
+                    if (!script.valid()) {
+                        continue;
+                    }
+                    sol::table module = script();
+                    sol::function init_func = module["init"];
+                    sol::function update_func = module["update"];
+                    try {
+                        init_func();
+                        game_log("Ran init function for: " + dir.path().filename().string());
+                    } catch (const sol::error& e) {
+                        game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                    } catch (...) {
+                        game_log("Caught unknown error!", neptune::ERROR);
+                    }
+                    updateFuncs.emplace_back(update_func);
                 }
-                sol::table module = script();
-                sol::function init_func = module["init"];
-                sol::function update_func = module["update"];
+            }
+        });
+        initThread.detach();
+        while (!quit) {
+            SDL_Event e;
+            for (const auto& func : updateFuncs) {
                 try {
-                    init_func();
-                    game_log("Ran init function for: " + dir.path().filename().string());
+                    func();
                 } catch (const sol::error& e) {
                     game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
                 } catch (...) {
                     game_log("Caught unknown error!", neptune::ERROR);
                 }
-                updateFuncs.emplace_back(update_func);
             }
-        }
-        bool quit = false;
-        while (!quit) {
-            SDL_Event e;
             while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
+                    break;
                 }
                 if (e.type == SDL_MOUSEBUTTONDOWN) {
                     int mouseX, mouseY;
@@ -141,19 +154,13 @@ namespace neptune {
                     }
                 }
             }
-            for (const auto& func : updateFuncs) {
-                try {
-                    func();
-                } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
-                } catch (...) {
-                    game_log("Caught unknown error!", neptune::ERROR);
-                }
-            }
             render();
         }
         for (const auto& [name, font] : fonts) {
             TTF_CloseFont(font);
+        }
+        if (initThread.joinable()) {
+            initThread.join();
         }
         main_lua_state = sol::state();
         workspace.objects.clear();
@@ -475,7 +482,6 @@ namespace neptune {
         std::string lastParentPath;
         std::string execDir = std::filesystem::path(getExecutablePath()).parent_path().string();
         std::string folderPath = execDir + "/" + gamePath.substr(0, gamePath.length() - 4) + "/";
-
         zip_stat_init(&fileStat);
 
         int err;
