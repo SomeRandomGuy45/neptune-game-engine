@@ -87,32 +87,32 @@ namespace neptune {
         */
         std::string execPath = getExecutablePath();
         std::string execDir = std::filesystem::path(execPath).parent_path().string();
+        std::vector<std::thread> initThreads;
         bool quit = false;
         game_log("Getting scripts from: " + execDir + "/assets/scripts");
-        std::thread initThread([&]() {
-            for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
-                if (dir.is_regular_file() && dir.path().extension().string() == ".lua") {
-                    game_log("Loading script: " + dir.path().filename().string());
-                    sol::load_result script = main_lua_state.load_file(dir.path().string());
-                    if (!script.valid()) {
-                        continue;
-                    }
-                    sol::table module = script();
-                    sol::function init_func = module["init"];
-                    sol::function update_func = module["update"];
-                    try {
-                        init_func();
-                        game_log("Ran init function for: " + dir.path().filename().string());
-                    } catch (const sol::error& e) {
-                        game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
-                    } catch (...) {
-                        game_log("Caught unknown error!", neptune::ERROR);
-                    }
-                    updateFuncs.emplace_back(update_func);
+        for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
+            if (dir.is_regular_file() && dir.path().extension().string() == ".lua") {
+                game_log("Loading script: " + dir.path().filename().string());
+                sol::load_result script = main_lua_state.load_file(dir.path().string());
+                if (!script.valid()) {
+                    continue;
                 }
+                sol::table module = script();
+                sol::function init_func = module["init"];
+                sol::function update_func = module["update"];
+                try {
+                    std::thread initFuncThread(init_func);
+                    initFuncThread.detach();
+                    initThreads.emplace_back(std::move(initFuncThread));
+                    game_log("Ran init function for: " + dir.path().filename().string());
+                } catch (const sol::error& e) {
+                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                } catch (...) {
+                    game_log("Caught unknown error!", neptune::ERROR);
+                }
+                updateFuncs.emplace_back(update_func);
             }
-        });
-        initThread.detach();
+        }
         while (!quit) {
             SDL_Event e;
             for (const auto& func : updateFuncs) {
@@ -159,13 +159,16 @@ namespace neptune {
         for (const auto& [name, font] : fonts) {
             TTF_CloseFont(font);
         }
-        if (initThread.joinable()) {
-            initThread.join();
+        for (auto& thread : initThreads) {
+            if (thread.joinable()) {
+                thread.join();
+            }
         }
         main_lua_state = sol::state();
         workspace.objects.clear();
         workspace.objects_base.clear();
         inputService.clearList();
+        initThreads.clear();
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         SDL_Quit();
