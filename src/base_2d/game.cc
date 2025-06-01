@@ -115,15 +115,6 @@ namespace neptune {
         }
         while (!quit) {
             SDL_Event e;
-            for (const auto& func : updateFuncs) {
-                try {
-                    func();
-                } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
-                } catch (...) {
-                    game_log("Caught unknown error!", neptune::ERROR);
-                }
-            }
             while (SDL_PollEvent(&e) != 0) {
                 if (e.type == SDL_QUIT) {
                     quit = true;
@@ -152,6 +143,15 @@ namespace neptune {
                     for (const auto& callback : inputService.returnListFromKey(e.key.keysym.sym)) { 
                         callback();
                     }
+                }
+            }
+            for (const auto& func : updateFuncs) {
+                try {
+                    func();
+                } catch (const sol::error& e) {
+                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                } catch (...) {
+                    game_log("Caught unknown error!", neptune::ERROR);
                 }
             }
             render();
