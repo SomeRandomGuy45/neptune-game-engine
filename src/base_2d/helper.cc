@@ -47,6 +47,7 @@ void game_log(const std::string& message, neptune::NEPTUNE_LOGLEVEL level) {
         default:
             std::cout << BOLD(FWHT("[INFO] ")) << message << std::endl;
             log_file << "[INFO] " << message << std::endl;
+            break;
     }
 
     log_file.close();
