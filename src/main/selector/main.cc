@@ -9,3 +9,9 @@
 * So like, if I choose to build a 2D game then it would open the exec called like "2d_base_engine"
 * Cool idea.. right? (hopefully ^_^) 
 */
+
+#include <iostream>
+
+int main(int argc, char** argv) {
+    return 0;
+}

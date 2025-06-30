@@ -1,9 +1,4 @@
 <scene>
-<script parent="workspace" path="events.lua" name="???"></script>
-<object type="box" name="box" parent="workspace">
-    <x>50</x>
-    <y>50</y>
-    <w>50</h>
-    <h>50</h>
-</object>
+<object type="script" parent="workspace" path="events.lua" name="event script"></object>
+<object type="box" name="box" parent="workspace" x=50 y=50 w=50 h=50></object>
 </scene>

@@ -293,8 +293,6 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
         SDL_SetTextureAlphaMod(texture, color.a);
     }
     SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
-    SDL_DestroyTexture(texture);
-    texture = nullptr;
 }
 
 void Sprite::setPosition(float _x, float _y)

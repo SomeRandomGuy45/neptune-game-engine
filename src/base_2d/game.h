@@ -19,6 +19,8 @@
 #include "gameLoaderHelper.h"
 #include "helper.h"
 
+using json = nlohmann::json;
+
 namespace neptune {
 
     using ObjectVariant = std::variant<std::unique_ptr<neptune::Sprite>, 
@@ -160,6 +162,47 @@ namespace neptune {
         TILDE = 126,
         DEL = 127
     };
+
+    class GameLoadingService {
+    public:
+        std::string Name;
+        std::string DefaultScene;
+
+        json InfoJson;
+        json ConfigJson;
+
+    private:
+        /*
+        * We are a 1 time service, only used when the game engine starts up!
+        * Idea: Maybe also use it for games, and not just the game engine??
+        */
+        bool HasLoadedGame = false;
+    };
+
+    class SceneLoadingService {
+    public:
+        std::string CurrentScene = "None";
+    
+        void loadNewScene(std::string newScene);
+    private:
+        /*
+        * To keep it simple, the scene data is stored like this
+        * SceneName, XML Doc
+        * IDEA: One day or soon, add a scene type?
+        */
+        std::unordered_map<std::string, pugi::xml_document> SceneData;
+    };
+
+
+    class DL_Service {
+    public:
+        /*
+        * TODO:
+        *   Like everything...
+        */
+        //void* getFunc(void);
+    };
+
     class InputService {
     public:
         void addToList(unsigned char keyInput, sol::function func);
@@ -208,6 +251,8 @@ namespace neptune {
         sol::state main_lua_state;
         std::vector<sol::function> updateFuncs;
         Camera camera;
+        GameLoadingService gameLoadingService;
+        SceneLoadingService sceneLoadingService;
     };
 
 } // namespace neptune

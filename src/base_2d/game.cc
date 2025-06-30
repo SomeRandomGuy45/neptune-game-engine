@@ -91,27 +91,26 @@ namespace neptune {
         bool quit = false;
         game_log("Getting scripts from: " + execDir + "/assets/scripts");
         for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
-            if (dir.is_regular_file() && dir.path().extension().string() == ".lua") {
-                game_log("Loading script: " + dir.path().filename().string());
-                sol::load_result script = main_lua_state.load_file(dir.path().string());
-                if (!script.valid()) {
-                    continue;
-                }
-                sol::table module = script();
-                sol::function init_func = module["init"];
-                sol::function update_func = module["update"];
-                try {
-                    std::thread initFuncThread(init_func);
-                    initFuncThread.detach();
-                    initThreads.emplace_back(std::move(initFuncThread));
-                    game_log("Ran init function for: " + dir.path().filename().string());
-                } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
-                } catch (...) {
-                    game_log("Caught unknown error!", neptune::ERROR);
-                }
-                updateFuncs.emplace_back(update_func);
+            if (!dir.is_regular_file() || dir.path().extension().string() != ".lua") continue;
+            game_log("Loading script: " + dir.path().filename().string());
+            sol::load_result script = main_lua_state.load_file(dir.path().string());
+            if (!script.valid()) {
+                continue;
             }
+            sol::table module = script();
+            sol::function init_func = module["init"];
+            sol::function update_func = module["update"];
+            try {
+                std::thread initFuncThread(init_func);
+                initFuncThread.detach();
+                initThreads.emplace_back(std::move(initFuncThread));
+                game_log("Ran init function for: " + dir.path().filename().string());
+            } catch (const sol::error& e) {
+                game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+            } catch (...) {
+                game_log("Caught unknown error!", neptune::ERROR);
+            }
+            updateFuncs.emplace_back(update_func);
         }
         while (!quit) {
             SDL_Event e;
@@ -125,18 +124,14 @@ namespace neptune {
                     SDL_GetMouseState(&mouseX, &mouseY);
                     for (const auto& [name, objVariant] : workspace.objects) {
                         bool isClicked = false;
-                        std::visit([this, mouseX, mouseY, name, &isClicked](auto& objPtr) {
-                            if (objPtr) {
-                                isClicked = objPtr->isClicked(mouseX, mouseY, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
+                        std::visit([this, mouseX, mouseY, &isClicked](auto& objPtr) {
+                            if (!objPtr) return;
+                                
+                            isClicked = objPtr->isClicked(mouseX, mouseY, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
+                            if (isClicked) {
+                                objPtr->DoEventCallback(MOUSE);
                             }
-                        }, objVariant);                        
-                        if (isClicked) {
-                            std::visit([](auto& objPtr) {
-                                if (objPtr) {
-                                    objPtr->DoEventCallback(MOUSE);
-                                }
-                            }, objVariant);
-                        }                        
+                        }, objVariant);                                       
                     }
                 }
                 if (e.type == SDL_KEYDOWN) {
@@ -181,6 +176,12 @@ namespace neptune {
             * Multiply by 1000, since SDL_Delay uses ms to delay
             */
             SDL_Delay(haltTime * 1000);
+        });
+        main_lua_state.set_function("setWinTitle", [this](std::string newTitle) {
+            if (window == nullptr) {
+                game_log("Window is not ready!", neptune::WARNING);
+            }
+            SDL_SetWindowTitle(window, newTitle.c_str());
         });
         sol::table enums = main_lua_state.create_named_table("Enums");
         enums.new_enum("Keycodes",
@@ -542,5 +543,9 @@ namespace neptune {
             }, objVariant);            
         }
         SDL_RenderPresent(renderer);
+    }
+    void SceneLoadingService::loadNewScene(std::string newScene)
+    {
+        
     }
 } // namespace neptune
