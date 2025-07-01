@@ -3,13 +3,17 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+if (APPLE)
+    set(wxBUILD_PRECOMP OFF)
+endif()
 set(wxBUILD_SHARED OFF)
 
 
 project(Selector VERSION 1.0)
 add_subdirectory(libs/wxWidgets)
-add_executable(Selector main.cc)
+add_executable(Selector main.cc app.cc)
 target_link_libraries(Selector wx::net wx::core wx::base)
 target_include_directories(Selector PUBLIC
                            "${PROJECT_BINARY_DIR}"
+                           "${PROJECT_BINARY_DIR}/libs/wxWidgets/include"
                            )

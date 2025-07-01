@@ -10,8 +10,12 @@
 * Cool idea.. right? (hopefully ^_^) 
 */
 
-#include <iostream>
+#include <wx/wxprec.h>
+ 
+#ifndef WX_PRECOMP
+    #include <wx/wx.h>
+#endif
 
-int main(int argc, char** argv) {
-    return 0;
-}
+#include "app.h"
+
+wxIMPLEMENT_APP(App);
