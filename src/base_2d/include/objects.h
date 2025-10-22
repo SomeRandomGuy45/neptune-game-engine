@@ -2,14 +2,21 @@
 #define OBJECTS
 #include <iostream>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_ttf.h>
+/*
+* When moving to using CMake the SDL2/SDL_image.h got.. f****d up
+* Don't know why
+*/
+#include <SDL_image.h>
+#include <SDL_mixer.h>
+#include <SDL_ttf.h>
 
 #include <list>
 
 #include "helper.h"
 #include "sol/sol.hpp"
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl2.h"
+#include "imgui/imgui_impl_sdlrenderer2.h"
 
 namespace neptune {
 
@@ -92,6 +99,12 @@ public:
         x = dx;
         y = dy;
     }
+    float getX() {
+        return x;
+    }
+    float getY() {
+        return y;
+    }
 };
 
 class EventListener : public BaseObject {
@@ -151,9 +164,13 @@ private:
 class Object {
 public:
     std::string name;
+    int zIndex;
+    bool didRender = false;
     virtual ~Object() = default;
     virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) = 0;
     void setName(const std::string& _name) { name = _name; }
+    void setZIndex(int _zIndex) { zIndex = _zIndex; }
+    int getZIndex() { return zIndex; }
 }; 
 
 class Box : public Object {
@@ -164,6 +181,8 @@ public:
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
     void setColor(SDL_Color newColor) { color = newColor; }
+    float getX() {return x;};
+    float getY() {return y;};
     /*
     * we can just convert the Vector2 class to floats
     */
@@ -186,6 +205,10 @@ public:
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
 
+    float getX() {return x;};
+    float getY() {return y;};
+
+
     void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
     void SetMouseCallBack(sol::function func);
@@ -205,6 +228,9 @@ public:
             name = "Circle";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    float getX() {return x;};
+    float getY() {return y;};
 
     void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
@@ -228,6 +254,9 @@ public:
             name = "Sprite";
     }
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    float getX() {return x;};
+    float getY() {return y;};
 
     void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
@@ -256,6 +285,7 @@ public:
                 /*
                 * later on force a use of a assets folder
                 * something like assets/fonts, would work
+                * done!
                 */
                 std::string execPath = getExecutablePath();
                 std::string execDir = std::filesystem::path(execPath).parent_path().string();
@@ -276,6 +306,9 @@ public:
             name = "Text";
         };
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
+
+    float getX() {return x;};
+    float getY() {return y;};
 
     void setPosition(float _x, float _y);
     void setTextColor(SDL_Color newColor) { text_color = newColor; }

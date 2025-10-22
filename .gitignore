@@ -7,3 +7,6 @@ test
 logs
 glad
 build
+.DS_STORE
+*.DS_STORE
+*.o

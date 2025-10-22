@@ -4,15 +4,34 @@
 #include <string>
 #include <fstream>
 
+/*
+* Lib stuff going to be RIPPED from simple
+* Its going to work different
+*/
+
 #ifdef _WIN32
 #include <windows.h>
+#define LIB_EXT ".dll"
+#define LIB_LOAD(name) LoadLibraryA(name)
+#define LIB_UNLOAD(lib) FreeLibrary((HMODULE)lib)
+#define LIB_GETFUNC(lib, func_name) reinterpret_cast<void*>(GetProcAddress((HMODULE)lib, func_name))
+#define OS "WIN"
 #else
 #include <unistd.h>
 #include <limits.h>
+#include <dlfcn.h>
+#define LIB_LOAD(name) dlopen(name, RTLD_LAZY)
+#define LIB_UNLOAD(lib) dlclose(lib)
+#define LIB_GETFUNC(lib, func_name) dlsym(lib, func_name)
 #endif
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
+#define LIB_EXT ".dylib"
+#define OS "MACOS"
+#elif linux
+#define LIB_EXT ".so"
+#define OS "LINUX"
 #endif
 
 namespace neptune {

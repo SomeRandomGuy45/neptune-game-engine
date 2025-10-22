@@ -1,6 +1,8 @@
-#include "game.h"
-
+#include <game.h>
 namespace neptune {
+
+    using float_milliseconds = std::chrono::duration<float, std::milli>;
+
     void InputService::addToList(unsigned char keyInput, sol::function func)
     {
         keyList[keyInput].push_back(func);
@@ -16,6 +18,19 @@ namespace neptune {
             return keyList[key];
         }
         return std::list<sol::function>();
+    }
+
+    void* Linker_Service::loadLib(const std::string& libName) {
+        return LIB_LOAD(libName.c_str());
+    }
+
+    void* Linker_Service::getFunc(void* lib, const std::string& funcName) {
+        return LIB_GETFUNC(lib, funcName.c_str());
+    }
+
+    int Linker_Service::removeLib(void *lib)
+    {
+        return LIB_UNLOAD(lib);
     }
 
     void Workspace::addObject(std::unique_ptr<neptune::Object> obj, sol::state& lua) {
@@ -59,12 +74,18 @@ namespace neptune {
     Game::~Game() {
         main_lua_state = sol::state();
     }
-    void Game::init(const std::string& winName ) {
+    void Game::init() {
+        #ifdef _WIN32
+            ::SetProcessDPIAware();
+        #endif
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
             game_log("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
             exit(1);
         }
-        window = SDL_CreateWindow("Neptune Game", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | flag_1 | flag_2);
+        #ifdef SDL_HINT_IME_SHOW_UI
+            SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
+        #endif
+        window = SDL_CreateWindow(sceneLoadingService.gameName.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | flags);
         if(!window)
         {
             game_log("Window could not be created! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
@@ -72,6 +93,7 @@ namespace neptune {
         }
         game_log("Made Window");
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
         if (!renderer)
         {
             game_log("Renderer could not be created! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
@@ -85,10 +107,33 @@ namespace neptune {
         });
         luaScriptThread.detach();
         */
+
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+        //ImGui::StyleColorsLight();
+
+        // Setup scaling
+        float main_scale = ImGui_ImplSDL2_GetContentScaleForDisplay(0);
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
+        style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+
+        // Setup Platform/Renderer backends
+        ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
+        ImGui_ImplSDLRenderer2_Init(renderer);
+
         std::string execPath = getExecutablePath();
         std::string execDir = std::filesystem::path(execPath).parent_path().string();
-        std::vector<std::thread> initThreads;
         bool quit = false;
+        std::shared_mutex lua_mutex;
         game_log("Getting scripts from: " + execDir + "/assets/scripts");
         for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
             if (!dir.is_regular_file() || dir.path().extension().string() != ".lua") continue;
@@ -100,21 +145,27 @@ namespace neptune {
             sol::table module = script();
             sol::function init_func = module["init"];
             sol::function update_func = module["update"];
-            try {
-                std::thread initFuncThread(init_func);
-                initFuncThread.detach();
-                initThreads.emplace_back(std::move(initFuncThread));
-                game_log("Ran init function for: " + dir.path().filename().string());
-            } catch (const sol::error& e) {
-                game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
-            } catch (...) {
-                game_log("Caught unknown error!", neptune::ERROR);
+            if (!init_func.valid()) {
+                game_log("init func is not valid or is empty", neptune::ERROR);
+                continue;;
             }
+            std::thread([init_func, &lua_mutex]() {
+                try {
+                    std::unique_lock<std::shared_mutex> lock(lua_mutex);
+                    init_func();
+                } catch (const sol::error& e) {
+                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                } catch (...) {
+                    game_log("Caught unknown error!", neptune::ERROR);
+                }
+            }).detach();
+            game_log("Ran init function for: " + dir.path().filename().string());
             updateFuncs.emplace_back(update_func);
         }
         while (!quit) {
             SDL_Event e;
             while (SDL_PollEvent(&e) != 0) {
+                ImGui_ImplSDL2_ProcessEvent(&e);
                 if (e.type == SDL_QUIT) {
                     quit = true;
                     break;
@@ -149,33 +200,43 @@ namespace neptune {
                     game_log("Caught unknown error!", neptune::ERROR);
                 }
             }
-            render();
+             // Start the Dear ImGui frame
+            ImGui_ImplSDLRenderer2_NewFrame();
+            ImGui_ImplSDL2_NewFrame();
+            ImGui::NewFrame();
+            if (showDemoWin) {
+                ImGui::ShowDemoWindow(&showDemoWin);
+            }
+
+            render(io);
         }
         for (const auto& [name, font] : fonts) {
             TTF_CloseFont(font);
         }
-        for (auto& thread : initThreads) {
-            if (thread.joinable()) {
-                thread.join();
-            }
-        }
-        main_lua_state = sol::state();
+        game_log("Got kill event!");
+        /*
+        * Took too long to fix lol!
+        */
+        updateFuncs.clear();
         workspace.objects.clear();
         workspace.objects_base.clear();
         inputService.clearList();
-        initThreads.clear();
+        main_lua_state = sol::state();
+        game_log("Cleared lua!");
+        ImGui_ImplSDLRenderer2_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+        game_log("Destoryed ImGui");
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
+        game_log("SDL window and renderer is gone... Quitting now...");
         SDL_Quit();
     }
     void Game::initLua()
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table);
         main_lua_state.set_function("halt", [](float haltTime){
-            /*
-            * Multiply by 1000, since SDL_Delay uses ms to delay
-            */
-            SDL_Delay(haltTime * 1000);
+            std::this_thread::sleep_for(float_milliseconds(haltTime * 1000));
         });
         main_lua_state.set_function("setWinTitle", [this](std::string newTitle) {
             if (window == nullptr) {
@@ -298,7 +359,9 @@ namespace neptune {
                     break;
                 }
                 obj.name = newName; 
-            }
+            },
+            "setZIndex" , &Object::setZIndex,
+            "getZIndex", &Object::getZIndex
         );
         
         main_lua_state.new_usertype<neptune::BaseObject>("BaseObject", 
@@ -343,6 +406,8 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::Text>("Text",
             sol::constructors<neptune::Text(float, float, float, float, std::string)>(),
+            "getX", &Text::getX,
+            "getY", &Text::getY,
             "setPosition", [](neptune::Text& self, sol::object maybe_vec) {
                 if (maybe_vec.is<neptune::Vector2>()) {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
@@ -359,10 +424,13 @@ namespace neptune {
             },
             "setBackgroundColor", [](neptune::Text& self, neptune::Color color) {
                 self.setBackgroundColor(color.toSDL());
-            }
+            },
+            sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
             sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),
+            "getX", &Sprite::getX,
+            "getY", &Sprite::getY,
             "setColor", [](neptune::Sprite& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
@@ -381,6 +449,8 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::Box>("Box",
             sol::constructors<neptune::Box(int, int, int, int, SDL_Color)>(),
+            "getX", &Box::getX,
+            "getY", &Box::getY,
             "setColor", [](neptune::Box& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
@@ -400,6 +470,8 @@ namespace neptune {
 
         main_lua_state.new_usertype<neptune::Triangle>("Triangle",
             sol::constructors<neptune::Triangle(int, int, int, int, SDL_Color)>(),
+            "getX", &Triangle::getX,
+            "getY", &Triangle::getY,
             "setColor", [](neptune::Triangle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
@@ -419,6 +491,8 @@ namespace neptune {
 
         main_lua_state.new_usertype<neptune::Circle>("Circle",
             sol::constructors<neptune::Circle(int, int, int, SDL_Color)>(),
+            "getX", &Circle::getX,
+            "getY", &Circle::getY,
             "setColor", [](neptune::Circle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
@@ -462,6 +536,12 @@ namespace neptune {
             },
             "SetCamera", [this](Workspace& ws, float dx, float dy) {
                 camera.setCamera(dx, dy);
+            },
+            "getCameraX", [this](Workspace& ws) {
+                return camera.getX();
+            },
+            "getCameraY", [this](Workspace& ws) {
+                return camera.getY();
             }
         );
         main_lua_state.new_usertype<Game>("Game",
@@ -475,8 +555,13 @@ namespace neptune {
         main_lua_state["game"] = this;
         game_log("Made Lua engine");
     }
-    void Game::loadGame(std::string gamePath)
+    // TODO... remove this function and make a better way to load games
+    void Game::loadGame_DEBUG(std::string gamePath)
     {
+        if (!isDebug) {
+            game_log("Tried to call function thats only allowed in DEBUG!", neptune::CRITICAL);
+            return;
+        }
         zip_t* za;
         zip_stat_t fileStat;
         zip_file_t* file;
@@ -485,7 +570,10 @@ namespace neptune {
         std::string parentPath;
         std::string lastParentPath;
         std::string execDir = std::filesystem::path(getExecutablePath()).parent_path().string();
-        std::string folderPath = execDir + "/" + gamePath.substr(0, gamePath.length() - 4) + "/";
+        std::string folderName = gamePath.substr(0, gamePath.length() - (std::filesystem::path(gamePath).extension().string().length()));
+        std::string folderPath = execDir + "/assets/projects/"  + folderName + "/";
+        gamePath = execDir + "/assets/projects/" + gamePath;
+        game_log("Extracting place to: " + folderPath + " From: " + gamePath);
         zip_stat_init(&fileStat);
 
         int err;
@@ -506,7 +594,7 @@ namespace neptune {
             std::string fullOutputPath = folderPath + fileStat.name;
             std::filesystem::path outputPath(fullOutputPath);
             game_log("Extracting file: " + fullOutputPath);
-            std::cout << fileStat.name[strlen(fileStat.name) - 1] << " " << strlen(fileStat.name) << "\n";
+            //std::cout << fileStat.name[strlen(fileStat.name) - 1] << " " << strlen(fileStat.name) << "\n";
             if (outputPath.has_parent_path()) {
                 std::filesystem::create_directories(outputPath.parent_path());
             }
@@ -527,25 +615,101 @@ namespace neptune {
             }
         }
         zip_close(za);
-        if (!isVaildGame(folderPath)) {
+        if (!isVaildGame(folderPath + folderName + "/")) {
             game_log("Unable to load place! Reason: Is not vaild game!", neptune::ERROR);
+            return;
+        }
+        std::ifstream mainJson(folderPath + folderName + "/main.json");
+        if (!mainJson.is_open()) {
+            game_log("Unable to open main.json!", neptune::ERROR);
+            return;
+        }
+        std::ifstream configJson(folderPath + folderName + "/config.json");
+        if (!configJson.is_open()) {
+            game_log("Unable to open config.json!", neptune::ERROR);
+            return;
+        }
+        sceneLoadingService.infoJson = json::parse(mainJson);
+        sceneLoadingService.configJson = json::parse(configJson);
+        mainJson.close();
+        configJson.close();
+        if (sceneLoadingService.infoJson.contains("projectName")) {
+            sceneLoadingService.projectName = sceneLoadingService.infoJson["projectName"];
+        }
+        if (sceneLoadingService.infoJson.contains("gameName")) {
+            sceneLoadingService.gameName = sceneLoadingService.infoJson["gameName"];
+        }
+        if (sceneLoadingService.infoJson.contains("defaultScene")) {
+            sceneLoadingService.defaultScene = sceneLoadingService.infoJson["defaultScene"];
+        }
+        if (!sceneLoadingService.infoJson.contains("scenes") || !sceneLoadingService.infoJson["scenes"].is_array()) {
+            
+            game_log("Got no scene data or its not a array! Quitting!", neptune::CRITICAL);
+            return;
+        }
+        for (const auto& sceneName : sceneLoadingService.infoJson["scenes"]) {
+            std::string pathToScene = folderPath + folderName + "/" + sceneName.get<std::string>() + ".scene";
+            pugi::xml_document doc;
+            pugi::xml_parse_result result = doc.load_file(pathToScene.c_str());
+            if (!result) {
+                game_log("Parsed with errors! Scene Name: " + pathToScene, neptune::WARNING);
+                continue;
+            }
+            game_log("Loaded scene: " + sceneName.get<std::string>());
+            sceneLoadingService.insertScene(sceneName, std::move(doc));
         }
     }
-    void Game::render()
+    void Game::render(ImGuiIO& io)
     {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
+        int objectsRendered = 0;
+        int numOfObjectsNeedToRender = workspace.objects.size();
+        std::set<int> zIndexes;
         for (const auto& [name, objVariant] : workspace.objects) {
-            std::visit([this](auto& objPtr) {
+            std::visit([&zIndexes](auto& objPtr) {
                 if (objPtr) {
-                    objPtr->render(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
+                    zIndexes.insert(objPtr->getZIndex());
                 }
-            }, objVariant);            
+            }, objVariant);
         }
+        for (int currentZIndex : zIndexes) {
+            for (const auto& [name, objVariant] : workspace.objects) {
+                std::visit([this, &objectsRendered, currentZIndex](auto& objPtr) {
+                    if (objPtr != nullptr && !objPtr->didRender && objPtr->getZIndex() == currentZIndex) {
+                        objPtr->render(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
+                        objPtr->didRender = true;
+                        objectsRendered++;
+                    }
+                }, objVariant);
+                if (objectsRendered >= numOfObjectsNeedToRender) {
+                    break;
+                }
+            }
+            if (objectsRendered >= numOfObjectsNeedToRender) {
+                break;
+            }
+        }
+        for (const auto& [name, objVariant] : workspace.objects) {
+            std::visit([](auto& objPtr) {
+                if (objPtr) {
+                    objPtr->didRender = false; 
+                }
+            }, objVariant);
+        }
+        ImGui::Render();
+        SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
+        SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
         SDL_RenderPresent(renderer);
+    }
+    void SceneLoadingService::insertScene(const std::string& name, pugi::xml_document&& doc) {
+        sceneData[name] = std::move(doc);
     }
     void SceneLoadingService::loadNewScene(std::string newScene)
     {
-        
+        /*
+        * TODO
+        */
     }
 } // namespace neptune

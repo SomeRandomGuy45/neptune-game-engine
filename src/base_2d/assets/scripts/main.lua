@@ -18,10 +18,20 @@ local moveMap = {
     [Enums.Keycodes.d] = function() v_pos:setX(v_pos:getX() + 2.5) end,
 }
 
+local object = game.Workspace:getDrawObject("hiiiii")
+local greenBox = game.Workspace:getDrawObject("moooo")
+local textThing = game.Workspace:getDrawObject("myhappyguy")
+local audio = game.Workspace:getObject("audio")
+
+function Follow(cam_X, cam_Y, x, y)
+    return Vector2.new(cam_X - x, cam_Y - y)
+end
+
 function M.init()
-    local object = game.Workspace:getDrawObject("hiiiii")  -- Get sprite by name
-    local textThing = game.Workspace:getDrawObject("myhappyguy")
-    local audio = game.Workspace:getObject("audio")
+    print("Init!")
+    print("Audio nil:", audio == nil)
+    print("textThing nil:", textThing == nil)
+    print("object nil:", object == nil)
     print("start")
     audio:Play()
     halt(2)
@@ -33,10 +43,22 @@ function M.init()
     print("text change")
     audio:Play()
     textThing:changeText("Hello world guys!")
+    local obj_pos_X = -greenBox:getX()
+    local obj_pos_Y = greenBox:getY()
     for key, action in pairs(moveMap) do
         game.InputService:addKeybind(key, function()
-            action()
-            object:setPosition(v_pos)
+            local ok, err = pcall(function()
+                action()
+                object:setPosition(v_pos)
+
+                local cam_X = game.Workspace:getCameraX()
+                local cam_Y = game.Workspace:getCameraY()
+                print(cam_X - obj_pos_X, cam_Y - obj_pos_Y)
+                greenBox:setPosition(Follow(cam_X, cam_Y, obj_pos_X, obj_pos_Y))
+            end)
+            if not ok then
+                print("Error during keybind:", err)
+            end
         end)
     end
 end

@@ -1,4 +1,4 @@
-#include "objects.h"
+#include <objects.h>
 
 namespace neptune {
 
@@ -32,7 +32,7 @@ void Audio::Play() {
         return;
     }
     int num = loopAmount;
-    num = loop ? 0 : 1; // -1 to play indefinitely, 1 to play once
+    num = loop ? 0 : 1; // -1 to play indefinitely, 1 to play once, done with the sub 1 in the play chan func
     channel = Mix_PlayChannel(-1, chunk.get(), num - 1);
     if (channel == -1) {
         game_log("Error playing audio! " + std::string(Mix_GetError()), neptune::ERROR);
@@ -208,7 +208,7 @@ void Circle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
     int offsetx, offsety, d;
     offsetx = 0;
     offsety = radius;
-    d = radius -1;
+    d = radius - 1;
 
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 

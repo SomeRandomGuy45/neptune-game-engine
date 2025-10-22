@@ -1,9 +1,11 @@
-#include "gameLoaderHelper.h"
+#include <gameLoaderHelper.h>
 
 namespace neptune {
 
 bool isVaildGame(const std::string& gameFolderPath) {
-    return (std::filesystem::exists(gameFolderPath + "/main.json") && std::filesystem::exists(gameFolderPath + "/config.json"));
+    if (gameFolderPath.empty()) return false;
+    std::cout << gameFolderPath << "\n";
+    return (std::filesystem::exists(gameFolderPath + "/main.json") && std::filesystem::exists(gameFolderPath + "/config.json") && std::filesystem::exists(gameFolderPath + "/assets"));
 }  
 
 

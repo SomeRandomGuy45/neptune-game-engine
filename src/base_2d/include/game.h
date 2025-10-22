@@ -8,8 +8,11 @@
 #include <filesystem>
 #include <sstream>
 #include <cctype>
+#include <fstream>
+#include <mutex>
+#include <shared_mutex>
+#include <set>
 #include <zip.h>
-
 
 #include "json.hpp"
 #include "pugixml.hpp"
@@ -18,6 +21,31 @@
 #include "objects.h"
 #include "gameLoaderHelper.h"
 #include "helper.h"
+#include "struct.h"
+
+#ifdef NEPTUNE_FULLSCREEN
+#define SCREEN_VALUE SDL_WINDOW_FULLSCREEN
+#else
+#define SCREEN_VALUE 0
+#endif
+
+#ifdef NEPTUNE_RESIZEABLE
+#define SCREEN_VALUE_2 SDL_WINDOW_RESIZABLE
+#else
+#define SCREEN_VALUE_2 0
+#endif
+
+#ifdef NEPTUNE_DEBUG_GLOBAL
+#define GLOBAL_DEBUG true
+#else
+#define GLOBAL_DEBUG false
+#endif
+
+#ifdef NEPTUNE_DEBUG_IMGUI
+#define USE_DEBUG_DEMO_WIN true
+#else
+#define USE_DEBUG_DEMO_WIN false
+#endif
 
 using json = nlohmann::json;
 
@@ -163,44 +191,37 @@ namespace neptune {
         DEL = 127
     };
 
-    class GameLoadingService {
-    public:
-        std::string Name;
-        std::string DefaultScene;
-
-        json InfoJson;
-        json ConfigJson;
-
-    private:
-        /*
-        * We are a 1 time service, only used when the game engine starts up!
-        * Idea: Maybe also use it for games, and not just the game engine??
-        */
-        bool HasLoadedGame = false;
-    };
-
     class SceneLoadingService {
     public:
-        std::string CurrentScene = "None";
+        std::string projectName = "Untitled Project";
+        std::string gameName = "Untitled Game";
+        std::string defaultScene = "scene1";
+        std::string currentScene = "scene1";
+
+        json infoJson;
+        json configJson;
     
-        void loadNewScene(std::string newScene);
+        void loadNewScene(std::string newScene = "defaultScene");
+        void insertScene(const std::string& name, pugi::xml_document&& doc);
     private:
         /*
         * To keep it simple, the scene data is stored like this
         * SceneName, XML Doc
         * IDEA: One day or soon, add a scene type?
         */
-        std::unordered_map<std::string, pugi::xml_document> SceneData;
+        std::unordered_map<std::string, pugi::xml_document> sceneData;
     };
 
 
-    class DL_Service {
+    class Linker_Service {
     public:
-        /*
-        * TODO:
-        *   Like everything...
-        */
-        //void* getFunc(void);
+        void loadNewLink(const std::string& libName);
+        void addFunctionFromLink(const std::string& libName, const std::string& funcName);
+        std::vector<std::string> returnAllFunctionsFromLink(const std::string& libName);
+    private:
+        void* loadLib(const std::string& libName);
+        void* getFunc(void* lib, const std::string& funcName);;
+        int removeLib(void* lib);
     };
 
     class InputService {
@@ -230,7 +251,7 @@ namespace neptune {
 
         Workspace workspace;
         InputService inputService;
-        void init(const std::string& winName = "Untitled Game");
+        void init();
         void initLua();
         void addObject(std::unique_ptr<neptune::Object> obj) {
             workspace.addObject(std::move(obj), main_lua_state);
@@ -238,20 +259,22 @@ namespace neptune {
         void addBaseObject(std::unique_ptr<neptune::BaseObject> obj) {
             workspace.addBaseObject(std::move(obj), main_lua_state);
         }
-        void loadGame(std::string gamePath);
+        void loadGame_DEBUG(std::string gamePath);
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
         // SDL_WINDOW_FULLSCREEN and SDL_WINDOW_RESIZABLE are the only ones we can use
-        Uint32 flag_1 = 0;
-        Uint32 flag_2 = 0;
+        Uint32 flags = SCREEN_VALUE | SCREEN_VALUE_2;
     private:
-        void render();
+        void render(ImGuiIO& io);
+        
+        bool showDemoWin = (USE_DEBUG_DEMO_WIN && GLOBAL_DEBUG);
+        bool isDebug = GLOBAL_DEBUG;
+        
         SDL_Window* window;
         SDL_Renderer* renderer;
         sol::state main_lua_state;
         std::vector<sol::function> updateFuncs;
         Camera camera;
-        GameLoadingService gameLoadingService;
         SceneLoadingService sceneLoadingService;
     };
 
