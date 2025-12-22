@@ -11,6 +11,6 @@ end
 -- in a different script
 
 local event = game.Workspace:getDrawObject("MyTestEvent")
-event:AddListener(function(arg1, arg2)
+event:addListener(function(arg1, arg2)
     print("WOW", arg1, arg2)
 end)

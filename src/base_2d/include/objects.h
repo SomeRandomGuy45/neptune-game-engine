@@ -149,17 +149,6 @@ private:
     bool loop = false;
 };
 
-class Script : public BaseObject {
-public:
-    Script() {
-        name = "Script";
-    }
-    
-    void saveToFile(std::string file);
-private:
-    std::string source;
-};
-
 // Drawable objects
 class Object {
 public:

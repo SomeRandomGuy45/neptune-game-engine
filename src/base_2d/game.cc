@@ -130,38 +130,13 @@ namespace neptune {
         ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
         ImGui_ImplSDLRenderer2_Init(renderer);
 
+
         std::string execPath = getExecutablePath();
         std::string execDir = std::filesystem::path(execPath).parent_path().string();
         bool quit = false;
         std::shared_mutex lua_mutex;
-        game_log("Getting scripts from: " + execDir + "/assets/scripts");
-        for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/scripts")) {
-            if (!dir.is_regular_file() || dir.path().extension().string() != ".lua") continue;
-            game_log("Loading script: " + dir.path().filename().string());
-            sol::load_result script = main_lua_state.load_file(dir.path().string());
-            if (!script.valid()) {
-                continue;
-            }
-            sol::table module = script();
-            sol::function init_func = module["init"];
-            sol::function update_func = module["update"];
-            if (!init_func.valid()) {
-                game_log("init func is not valid or is empty", neptune::ERROR);
-                continue;;
-            }
-            std::thread([init_func, &lua_mutex]() {
-                try {
-                    std::unique_lock<std::shared_mutex> lock(lua_mutex);
-                    init_func();
-                } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
-                } catch (...) {
-                    game_log("Caught unknown error!", neptune::ERROR);
-                }
-            }).detach();
-            game_log("Ran init function for: " + dir.path().filename().string());
-            updateFuncs.emplace_back(update_func);
-        }
+        game_log("Loading scripts");
+        loadLua(lua_mutex);
         while (!quit) {
             SDL_Event e;
             while (SDL_PollEvent(&e) != 0) {
@@ -221,7 +196,7 @@ namespace neptune {
         workspace.objects.clear();
         workspace.objects_base.clear();
         inputService.clearList();
-        main_lua_state = sol::state();
+        luaScripts.clear();
         game_log("Cleared lua!");
         ImGui_ImplSDLRenderer2_Shutdown();
         ImGui_ImplSDL2_Shutdown();
@@ -392,7 +367,7 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::EventListener>("EventListener",
             sol::constructors<EventListener()>(),
-            "AddListener", [](neptune::EventListener& event, sol::function func) {
+            "addListener", [](neptune::EventListener& event, sol::function func) {
                 event.AddListener(func);
             },
             "Fire", [](neptune::EventListener& event, sol::variadic_args args) {
@@ -531,10 +506,10 @@ namespace neptune {
                 }
                 return sol::lua_nil;
             },
-            "MoveCamera", [this](Workspace& ws, float dx, float dy) {
+            "moveCamera", [this](Workspace& ws, float dx, float dy) {
                 camera.move(dx, dy);
             },
-            "SetCamera", [this](Workspace& ws, float dx, float dy) {
+            "setCamera", [this](Workspace& ws, float dx, float dy) {
                 camera.setCamera(dx, dy);
             },
             "getCameraX", [this](Workspace& ws) {
@@ -647,16 +622,51 @@ namespace neptune {
             game_log("Got no scene data or its not a array! Quitting!", neptune::CRITICAL);
             return;
         }
+        for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/sprite_data")) {
+            if (!dir.is_regular_file()) continue;
+            std::string path = dir.path().string();
+            game_log("Moving sprite data from: " + path + " to " + execDir + "/assets/sprite_data/" + dir.path().filename().string());
+            std::filesystem::rename(path, execDir + "/assets/sprite_data/" + dir.path().filename().string());
+        }
         for (const auto& sceneName : sceneLoadingService.infoJson["scenes"]) {
             std::string pathToScene = folderPath + folderName + "/" + sceneName.get<std::string>() + ".scene";
+            std::ifstream stream(pathToScene);
             pugi::xml_document doc;
-            pugi::xml_parse_result result = doc.load_file(pathToScene.c_str());
+            pugi::xml_parse_result result = doc.load(stream);
             if (!result) {
                 game_log("Parsed with errors! Scene Name: " + pathToScene, neptune::WARNING);
                 continue;
             }
-            game_log("Loaded scene: " + sceneName.get<std::string>());
             sceneLoadingService.insertScene(sceneName, std::move(doc));
+        }
+    }
+    void Game::loadLua(std::shared_mutex& lua_mutex)
+    {
+        for (const std::string& file : luaScripts) {
+            game_log("Loading script: " + file);
+            sol::load_result script = main_lua_state.load_file(file);
+            if (!script.valid()) {
+                continue;
+            }
+            sol::table module = script();
+            sol::function init_func = module["init"];
+            sol::function update_func = module["update"];
+            if (!init_func.valid()) {
+                game_log("init func is not valid or is empty", neptune::ERROR);
+                continue;;
+            }
+            std::thread([init_func, &lua_mutex]() {
+                try {
+                    std::unique_lock<std::shared_mutex> lock(lua_mutex);
+                    init_func();
+                } catch (const sol::error& e) {
+                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                } catch (...) {
+                    game_log("Caught unknown error!", neptune::ERROR);
+                }
+            }).detach();
+            game_log("Ran init function for: " + file);
+            updateFuncs.emplace_back(update_func);
         }
     }
     void Game::render(ImGuiIO& io)
@@ -711,5 +721,21 @@ namespace neptune {
         /*
         * TODO
         */
+       pugi::xml_document& doc = sceneData[newScene];
+       for (pugi::xml_node_iterator it = doc.begin(); it != doc.end(); ++it) {
+           pugi::xml_node node = *it;
+           std::string nodeName = node.name();
+           if (nodeName == "object") {
+                std::string objName = node.attribute("name").as_string();
+                std::string objType = node.attribute("type").as_string();
+                if (objType == "box") {
+                    
+                }
+           }
+       }
+    }
+    void Game::loadNewScene(std::string newScene)
+    {
+        sceneLoadingService.loadNewScene(newScene);
     }
 } // namespace neptune

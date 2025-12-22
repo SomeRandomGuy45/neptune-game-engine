@@ -59,7 +59,6 @@ namespace neptune {
     using BaseObjectVariant = std::variant<std::unique_ptr<neptune::EventListener>,
                                            std::unique_ptr<neptune::Audio>>;
 
-
     enum Keycodes : unsigned char {
         NUL = 0,   // Null
         SOH = 1,   // Start of Header
@@ -253,6 +252,10 @@ namespace neptune {
         InputService inputService;
         void init();
         void initLua();
+        void addLuaScript(const std::string& scriptPath) {
+            luaScripts.push_back(scriptPath);
+        }
+        void loadLua(std::shared_mutex& lua_mutex);
         void addObject(std::unique_ptr<neptune::Object> obj) {
             workspace.addObject(std::move(obj), main_lua_state);
         }    
@@ -260,6 +263,7 @@ namespace neptune {
             workspace.addBaseObject(std::move(obj), main_lua_state);
         }
         void loadGame_DEBUG(std::string gamePath);
+        void loadNewScene(std::string newScene);
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
         // SDL_WINDOW_FULLSCREEN and SDL_WINDOW_RESIZABLE are the only ones we can use
@@ -274,6 +278,7 @@ namespace neptune {
         SDL_Renderer* renderer;
         sol::state main_lua_state;
         std::vector<sol::function> updateFuncs;
+        std::vector<std::string> luaScripts;
         Camera camera;
         SceneLoadingService sceneLoadingService;
     };

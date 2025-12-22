@@ -1,10 +1,7 @@
 #include <game.h>
 #include <memory>
 
-int main(int argc, char **argv) {
-    neptune::Game game;
-    game.loadGame_DEBUG("exampleProject.project");
-    game.initLua();
+void initTestGame(neptune::Game& game) {
     auto boxTest = std::make_unique<neptune::Box>(150, 0, 100, 100, SDL_Color{255, 255, 255, 255});
     boxTest->setColor(SDL_Color{0, 255, 0, 1});
     boxTest->name = "moooo";
@@ -29,6 +26,14 @@ int main(int argc, char **argv) {
     game.addObject(std::move(spriteTest));
     game.addObject(std::move(circleTest));
     game.addObject(std::move(textTest));
+}
+
+int main(int argc, char **argv) {
+    neptune::Game game;
+    game.loadGame_DEBUG("exampleProject.project");
+    game.loadNewScene("scene1");
+    game.initLua();
+    initTestGame(game);
     game.init();
     return 0;
 }

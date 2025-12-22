@@ -1,4 +1,14 @@
-<scene>
-<object type="script" parent="workspace" path="events.lua" name="event script"></object>
-<object type="box" name="box" parent="workspace" x="50" y="50" w="50" h="50"></object>
-</scene>
+<?xml version="1.0"?>
+<game>
+    <gameSettings>
+        <setting name="sceneName" value="scene1"></setting>
+    </gameSettings>
+    <!--
+        wanna add 2 types of ways to load scripts from a script object
+        path = load script from the root of the project
+        abs_path = load script from absolute path 
+        engine will default to using path
+    -->
+    <script name="testLua" path="assets/scripts/test.lua"></script>
+    <object type="box" name="box" x="50" y="50" w="50" h="50"></object>
+</game>
