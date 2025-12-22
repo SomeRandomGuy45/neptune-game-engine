@@ -729,7 +729,7 @@ namespace neptune {
                 std::string objName = node.attribute("name").as_string();
                 std::string objType = node.attribute("type").as_string();
                 if (objType == "box") {
-                    
+                    // TODO
                 }
            }
        }
