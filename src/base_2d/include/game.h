@@ -190,6 +190,13 @@ namespace neptune {
         DEL = 127
     };
 
+    struct colorStruct {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+        uint8_t a;
+    };
+
     class SceneLoadingService {
     public:
         std::string projectName = "Untitled Project";
@@ -199,9 +206,9 @@ namespace neptune {
 
         json infoJson;
         json configJson;
-    
-        void loadNewScene(std::string newScene = "defaultScene");
+
         void insertScene(const std::string& name, pugi::xml_document&& doc);
+        pugi::xml_document& getAllScenes(const std::string& name);
     private:
         /*
         * To keep it simple, the scene data is stored like this

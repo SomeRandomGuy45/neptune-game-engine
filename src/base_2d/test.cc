@@ -31,9 +31,9 @@ void initTestGame(neptune::Game& game) {
 int main(int argc, char **argv) {
     neptune::Game game;
     game.loadGame_DEBUG("exampleProject.project");
-    game.loadNewScene("scene1");
     game.initLua();
-    initTestGame(game);
+    game.loadNewScene("scene1");
+    //initTestGame(game);
     game.init();
     return 0;
 }

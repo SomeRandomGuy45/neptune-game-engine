@@ -3,6 +3,23 @@ namespace neptune {
 
     using float_milliseconds = std::chrono::duration<float, std::milli>;
 
+    enum objectTypes {
+        SPRITE,
+        BOX,
+        TRIANGLE,
+        CIRCLE,
+        TEXT,
+        NONE = -1
+    };
+
+    std::unordered_map<std::string, objectTypes> strToObjectTypes = {
+        {"sprite", SPRITE},
+        {"box", BOX},
+        {"triangle", TRIANGLE},
+        {"circle", CIRCLE},
+        {"text", TEXT}
+    };
+
     void InputService::addToList(unsigned char keyInput, sol::function func)
     {
         keyList[keyInput].push_back(func);
@@ -637,7 +654,8 @@ namespace neptune {
                 game_log("Parsed with errors! Scene Name: " + pathToScene, neptune::WARNING);
                 continue;
             }
-            sceneLoadingService.insertScene(sceneName, std::move(doc));
+            game_log("Loaded scene: " + sceneName.get<std::string>());
+            sceneLoadingService.insertScene(sceneName.get<std::string>(), std::move(doc));
         }
     }
     void Game::loadLua(std::shared_mutex& lua_mutex)
@@ -689,6 +707,7 @@ namespace neptune {
                     if (objPtr != nullptr && !objPtr->didRender && objPtr->getZIndex() == currentZIndex) {
                         objPtr->render(renderer, SCREEN_WIDTH, SCREEN_HEIGHT, camera);
                         objPtr->didRender = true;
+                        //std::cout << "Rendered object: " << objPtr->name << " at Z-Index: " << currentZIndex << "\n";
                         objectsRendered++;
                     }
                 }, objVariant);
@@ -716,26 +735,49 @@ namespace neptune {
     void SceneLoadingService::insertScene(const std::string& name, pugi::xml_document&& doc) {
         sceneData[name] = std::move(doc);
     }
-    void SceneLoadingService::loadNewScene(std::string newScene)
-    {
-        /*
-        * TODO
-        */
-       pugi::xml_document& doc = sceneData[newScene];
-       for (pugi::xml_node_iterator it = doc.begin(); it != doc.end(); ++it) {
-           pugi::xml_node node = *it;
-           std::string nodeName = node.name();
-           if (nodeName == "object") {
-                std::string objName = node.attribute("name").as_string();
-                std::string objType = node.attribute("type").as_string();
-                if (objType == "box") {
-                    // TODO
-                }
-           }
-       }
+    pugi::xml_document& SceneLoadingService::getAllScenes(const std::string& name) {
+        return sceneData[name];
     }
     void Game::loadNewScene(std::string newScene)
     {
-        sceneLoadingService.loadNewScene(newScene);
+        pugi::xml_document& doc = sceneLoadingService.getAllScenes(newScene);
+        for (pugi::xml_node node : doc.child("game").children()) {
+            std::string nodeName = node.name();
+            std::cout << "Node Name: " << nodeName << "\n";
+            if (nodeName == "object") {
+                std::string objName = node.attribute("name").as_string();
+                std::string objType = node.attribute("type").as_string();
+                std::cout << objType << "\n";
+                objectTypes objTypeEnum = objectTypes::NONE;
+                if (objType == "sprite" || objType == "box" || objType == "triangle" || objType == "circle" || objType == "text") {
+                    objTypeEnum = strToObjectTypes[objType];
+                }
+                if (objTypeEnum != objectTypes::NONE) {
+                    std::unique_ptr<neptune::Object> newObj = nullptr;
+                    switch (objTypeEnum) {
+                        
+                    case objectTypes::BOX: {
+                        int x = node.attribute("x").as_int();
+                        int y = node.attribute("y").as_int();
+                        int w = node.attribute("w").as_int();
+                        int h = node.attribute("h").as_int();
+
+                        SDL_Color color = {255, 255, 255, 255};
+
+                        newObj = std::make_unique<neptune::Box>(x, y, w, h, color);
+                        newObj->setZIndex(10);
+                        break;
+                    }
+
+                        
+                    default: {
+                        break;
+                    }        
+                    }
+                    newObj->name = objName;
+                    workspace.addObject(std::move(newObj), main_lua_state);
+                }
+            }
+        }
     }
 } // namespace neptune

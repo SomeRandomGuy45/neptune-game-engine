@@ -5,10 +5,10 @@
     </gameSettings>
     <!--
         wanna add 2 types of ways to load scripts from a script object
-        path = load script from the root of the project
-        abs_path = load script from absolute path 
+        path = load script from the script folder
+        abs_path = load script from absolute path (key /base/ will be base of project)
         engine will default to using path
     -->
-    <script name="testLua" path="assets/scripts/test.lua"></script>
-    <object type="box" name="box" x="50" y="50" w="50" h="50"></object>
+    <script name="testLua" path="test.lua"></script>
+    <object type="box" name="box" x="50" y="50" w="50" h="50" hexRbg="#FF0000" transparency="1"></object>
 </game>
