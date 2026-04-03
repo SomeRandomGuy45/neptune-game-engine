@@ -6,7 +6,7 @@ namespace neptune {
 * BASEOBJECTS
 */
 
-void EventListener::AddListener(sol::function func)
+void EventListener::AddListener(sol::protected_function func)
 {
     listeners.push_back(func);
 }
@@ -107,7 +107,7 @@ void Box::setPosition(float _x, float _y)
     y = _y;
 }
 
-void Box::SetMouseCallBack(sol::function func)
+void Box::SetMouseCallBack(sol::protected_function func)
 {
     mouseCallbacks.push_back(func);
 }
@@ -157,7 +157,7 @@ void Triangle::setPosition(float _x, float _y)
     y = _y;
 }
 
-void Triangle::SetMouseCallBack(sol::function func)
+void Triangle::SetMouseCallBack(sol::protected_function func)
 {
     mouseCallbacks.push_back(func);
 }
@@ -243,7 +243,7 @@ void Circle::setPosition(float _x, float _y)
     y = _y;
 }
 
-void Circle::SetMouseCallBack(sol::function func)
+void Circle::SetMouseCallBack(sol::protected_function func)
 {
     mouseCallbacks.push_back(func);
 }
@@ -301,7 +301,7 @@ void Sprite::setPosition(float _x, float _y)
     y = _y;
 }
 
-void Sprite::SetMouseCallBack(sol::function func)
+void Sprite::SetMouseCallBack(sol::protected_function func)
 {
     mouseCallbacks.push_back(func);
 }

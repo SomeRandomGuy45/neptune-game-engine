@@ -20,7 +20,7 @@ namespace neptune {
         {"text", TEXT}
     };
 
-    void InputService::addToList(unsigned char keyInput, sol::function func)
+    void InputService::addToList(unsigned char keyInput, sol::protected_function func)
     {
         keyList[keyInput].push_back(func);
     }
@@ -29,12 +29,12 @@ namespace neptune {
         keyList.clear();
     }
 
-    std::list<sol::function> InputService::returnListFromKey(unsigned char key)
+    std::list<sol::protected_function> InputService::returnListFromKey(unsigned char key)
     {
         if (keyList.count(key) != 0) {
             return keyList[key];
         }
-        return std::list<sol::function>();
+        return std::list<sol::protected_function>();
     }
 
     void* Linker_Service::loadLib(const std::string& libName) {
@@ -384,7 +384,7 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::EventListener>("EventListener",
             sol::constructors<EventListener()>(),
-            "addListener", [](neptune::EventListener& event, sol::function func) {
+            "addListener", [](neptune::EventListener& event, sol::protected_function func) {
                 event.AddListener(func);
             },
             "Fire", [](neptune::EventListener& event, sol::variadic_args args) {
@@ -426,7 +426,7 @@ namespace neptune {
             "setColor", [](neptune::Sprite& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "setMouseCallBack", [](neptune::Sprite& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Sprite& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
             },
             "setPosition", [](neptune::Sprite& self, sol::object maybe_vec) {
@@ -446,7 +446,7 @@ namespace neptune {
             "setColor", [](neptune::Box& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "setMouseCallBack", [](neptune::Box& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Box& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
             },
             "setPosition", [](neptune::Box& self, sol::object maybe_vec) {
@@ -467,7 +467,7 @@ namespace neptune {
             "setColor", [](neptune::Triangle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "setMouseCallBack", [](neptune::Triangle& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Triangle& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
             },
             "setPosition", [](neptune::Triangle& self, sol::object maybe_vec) {
@@ -488,7 +488,7 @@ namespace neptune {
             "setColor", [](neptune::Circle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
             },
-            "setMouseCallBack", [](neptune::Circle& self, sol::function func) {
+            "setMouseCallBack", [](neptune::Circle& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
             },
             "setPosition", [](neptune::Circle& self, sol::object maybe_vec) {
@@ -667,11 +667,11 @@ namespace neptune {
                 continue;
             }
             sol::table module = script();
-            sol::function init_func = module["init"];
-            sol::function update_func = module["update"];
+            sol::protected_function init_func = module["init"];
+            sol::protected_function update_func = module["update"];
             if (!init_func.valid()) {
                 game_log("init func is not valid or is empty", neptune::ERROR);
-                continue;;
+                continue;
             }
             std::thread([init_func, &lua_mutex]() {
                 try {
@@ -743,7 +743,7 @@ namespace neptune {
         pugi::xml_document& doc = sceneLoadingService.getAllScenes(newScene);
         for (pugi::xml_node node : doc.child("game").children()) {
             std::string nodeName = node.name();
-            std::cout << "Node Name: " << nodeName << "\n";
+            game_log("Node Name: " + nodeName);
             if (nodeName == "object") {
                 std::string objName = node.attribute("name").as_string();
                 std::string objType = node.attribute("type").as_string();
@@ -763,9 +763,24 @@ namespace neptune {
                         int h = node.attribute("h").as_int();
 
                         SDL_Color color = {255, 255, 255, 255};
-
+                        if (node.attribute("hexRbg").as_string()) {
+                            std::string colorStr = std::string(node.attribute("hexRbg").as_string()).substr(1); // Remove the '#' character
+                            unsigned long colorValue = std::stoul(colorStr, nullptr, 16);
+                            color.r = (colorValue >> 16) & 0xFF;
+                            color.g = (colorValue >> 8) & 0xFF;
+                            color.b = colorValue & 0xFF;
+                        }
+                        if (node.attribute("transparency").as_string()) {
+                            std::string transparencyStr = node.attribute("transparency").as_string();
+                            float transparencyValue = std::stof(transparencyStr);
+                            color.a = static_cast<Uint8>(transparencyValue * 255);
+                        }
                         newObj = std::make_unique<neptune::Box>(x, y, w, h, color);
-                        newObj->setZIndex(10);
+                        if (node.attribute("zIndex").as_string()) {
+                            newObj->setZIndex(node.attribute("zIndex").as_int());
+                        } else {
+                            newObj->setZIndex(0);
+                        }
                         break;
                     }
 

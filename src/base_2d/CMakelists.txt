@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+enable_language(ASM-ATT)
 
 set(LIBRARY_NAME neptuneSource)
 set(SOURCES
@@ -37,6 +38,9 @@ endif()
 
 add_library(${LIBRARY_NAME} SHARED ${SOURCES})
 
+set(SDL2MIXER_VENDORED ON CACHE BOOL "" FORCE)
+set(SDL2IMAGE_VENDORED ON CACHE BOOL "" FORCE)
+set(SDL2TTF_VENDORED ON CACHE BOOL "" FORCE)
 add_subdirectory(libs/SDL2)
 add_subdirectory(libs/SDL2_image)
 add_subdirectory(libs/SDL2_mixer)

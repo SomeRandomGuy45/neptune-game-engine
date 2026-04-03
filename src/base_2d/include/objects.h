@@ -112,10 +112,10 @@ public:
     EventListener() {
         name = "EventListener";
     }
-    void AddListener(sol::function func);
+    void AddListener(sol::protected_function func);
     void Fire(sol::variadic_args args);
 private:
-    std::list<sol::function> listeners;
+    std::list<sol::protected_function> listeners;
 };
 
 class Audio : public BaseObject {
@@ -176,12 +176,12 @@ public:
     * we can just convert the Vector2 class to floats
     */
     void setPosition(float _x, float _y);
-    void SetMouseCallBack(sol::function func);
+    void SetMouseCallBack(sol::protected_function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
-    std::list<sol::function> mouseCallbacks;
+    std::list<sol::protected_function> mouseCallbacks;
     float x, y, w, h;
     SDL_Color color{0,0,0,0};
 };
@@ -200,12 +200,12 @@ public:
 
     void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
-    void SetMouseCallBack(sol::function func);
+    void SetMouseCallBack(sol::protected_function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
-    std::list<sol::function> mouseCallbacks;
+    std::list<sol::protected_function> mouseCallbacks;
     float x, y, w, h;
     SDL_Color color{0,0,0,0};
 };
@@ -223,12 +223,12 @@ public:
 
     void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
-    void SetMouseCallBack(sol::function func);
+    void SetMouseCallBack(sol::protected_function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
-    std::list<sol::function> mouseCallbacks;
+    std::list<sol::protected_function> mouseCallbacks;
     int x, y, radius;
     SDL_Color color{0,0,0,0};
 };
@@ -249,14 +249,14 @@ public:
 
     void setPosition(float _x, float _y);
     void setColor(SDL_Color newColor) { color = newColor; }
-    void SetMouseCallBack(sol::function func);
+    void SetMouseCallBack(sol::protected_function func);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     SDL_Texture* texture = nullptr;
     SDL_Color color{0,0,0,0};
-    std::list<sol::function> mouseCallbacks;
+    std::list<sol::protected_function> mouseCallbacks;
     std::string filePath;
     float x, y, w, h;
 };
