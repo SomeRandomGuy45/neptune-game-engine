@@ -120,7 +120,7 @@ void Box::DoEventCallback(NEPTUNE_CALLBACK callback)
         }
     }
     else {
-        game_log("Invalid callback type", neptune::WARNING);
+        game_log("Invalid callback type (Or is empty)", neptune::WARNING);
     }
 }
 
@@ -170,7 +170,7 @@ void Triangle::DoEventCallback(NEPTUNE_CALLBACK callback)
         }
     }
     else {
-        game_log("Invalid callback type", neptune::WARNING);
+        game_log("Invalid callback type (Or is empty)", neptune::WARNING);
     }
 }
 
@@ -256,7 +256,7 @@ void Circle::DoEventCallback(NEPTUNE_CALLBACK callback)
         }
     }
     else {
-        game_log("Invalid callback type", neptune::WARNING);
+        game_log("Invalid callback type (Or is empty)", neptune::WARNING);
     }
 }
 
@@ -314,7 +314,7 @@ void Sprite::DoEventCallback(NEPTUNE_CALLBACK callback)
         }
     }
     else {
-        game_log("Invalid callback type", neptune::WARNING);
+        game_log("Invalid callback type (Or is empty)", neptune::WARNING);
     }
 }
 
