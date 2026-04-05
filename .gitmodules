@@ -23,3 +23,6 @@
 [submodule "src/base_2d/libs/libzip"]
 	path = src/base_2d/libs/libzip
 	url = https://github.com/nih-at/libzip.git
+[submodule "src/base_2d/libs/zlib"]
+	path = src/base_2d/libs/zlib
+	url = https://github.com/madler/zlib.git
