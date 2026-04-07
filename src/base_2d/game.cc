@@ -784,6 +784,21 @@ namespace neptune {
                         break;
                     }
 
+                    case objectTypes::SPRITE: {
+                        int x = node.attribute("x").as_int();
+                        int y = node.attribute("y").as_int();
+                        int w = node.attribute("w").as_int();
+                        int h = node.attribute("h").as_int();
+                        std::string spritePath = node.attribute("path").as_string();
+                        newObj = std::make_unique<neptune::Sprite>(spritePath, x, y, w, h);
+                        if (node.attribute("zIndex").as_string()) {
+                            newObj->setZIndex(node.attribute("zIndex").as_int());
+                        } else {
+                            newObj->setZIndex(0);
+                        }
+                        break;
+                    }
+
                         
                     default: {
                         break;

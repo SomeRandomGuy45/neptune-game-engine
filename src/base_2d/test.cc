@@ -32,9 +32,9 @@ int main(int argc, char **argv) {
     neptune::debugFunction_01();
     const char* filePath = neptune::getFileFromPicker();
     if (filePath == nullptr) {
-        std::cout << "Either windows or something happened\n";
+        neptune::game_log("No file stuff was selected, or user is on unsupported platform", neptune::WARNING);
     } else {
-        std::cout << "File path: " << filePath << "\n";
+        neptune::game_log("File path: " + std::string(filePath));
         delete filePath;
     }
     neptune::Game game;
