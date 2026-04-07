@@ -1,5 +1,4 @@
-#ifndef gameLoaderHelper
-#define gameLoaderHelper
+#pragma once
 
 #include <string>
 #include <filesystem>
@@ -15,5 +14,3 @@ bool isVaildGame(const std::string& gameFolderPath);
 */
 
 };
-
-#endif

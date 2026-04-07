@@ -1,5 +1,4 @@
-#ifndef HELPER
-#define HELPER
+#pragma once
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -74,4 +73,3 @@ std::string get_current_logfile();
 inline std::string currentLogPath = get_current_logfile();
 
 }
-#endif

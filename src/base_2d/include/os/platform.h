@@ -1,13 +1,9 @@
-#ifndef platform
-#define platform
-#endif
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace neptune {
 
 char* getFileFromPicker();
 
-#ifdef __cplusplus
+void debugFunction_01();
+
 }
-#endif

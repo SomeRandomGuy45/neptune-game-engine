@@ -1,5 +1,4 @@
-#ifndef OBJECTS
-#define OBJECTS
+#pragma once
 #include <iostream>
 #include <SDL2/SDL.h>
 /*
@@ -315,4 +314,3 @@ private:
 };
 
 }
-#endif

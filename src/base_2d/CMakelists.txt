@@ -63,6 +63,7 @@ if (APPLE)
     target_link_libraries(${LIBRARY_NAME} PRIVATE
         "-framework AppKit"
         "-framework Foundation"
+        "-framework UniformTypeIdentifiers"
     )
 endif()
 
@@ -129,6 +130,7 @@ if (APPLE)
     target_link_libraries(test_example_1 PRIVATE
             "-framework AppKit"
             "-framework Foundation"
+            "-framework UniformTypeIdentifiers"
         )
     add_custom_command(TARGET test_example_1 POST_BUILD
         COMMAND install_name_tool -change @rpath/libneptuneSource.dylib @executable_path/libneptuneSource.dylib

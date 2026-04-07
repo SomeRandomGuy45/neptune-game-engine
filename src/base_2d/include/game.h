@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <memory>
 #include <string>
@@ -22,6 +24,7 @@
 #include "gameLoaderHelper.h"
 #include "helper.h"
 #include "struct.h"
+#include "os/platform.h"
 
 #ifdef NEPTUNE_FULLSCREEN
 #define SCREEN_VALUE SDL_WINDOW_FULLSCREEN

@@ -29,6 +29,14 @@ void initTestGame(neptune::Game& game) {
 }
 
 int main(int argc, char **argv) {
+    neptune::debugFunction_01();
+    const char* filePath = neptune::getFileFromPicker();
+    if (filePath == nullptr) {
+        std::cout << "Either windows or something happened\n";
+    } else {
+        std::cout << "File path: " << filePath << "\n";
+        delete filePath;
+    }
     neptune::Game game;
     game.loadGame_DEBUG("exampleProject.project");
     game.initLua();
