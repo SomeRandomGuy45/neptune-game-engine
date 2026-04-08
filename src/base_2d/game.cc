@@ -224,6 +224,7 @@ namespace neptune {
         game_log("SDL window and renderer is gone... Quitting now...");
         SDL_Quit();
     }
+    
     void Game::initLua()
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table);
@@ -236,111 +237,14 @@ namespace neptune {
             }
             SDL_SetWindowTitle(window, newTitle.c_str());
         });
-        sol::table enums = main_lua_state.create_named_table("Enums");
-        enums.new_enum("Keycodes",
-            "NUL", Keycodes::NUL,
-            "SOH", Keycodes::SOH,
-            "STX", Keycodes::STX,
-            "ETX", Keycodes::ETX,
-            "EOT", Keycodes::EOT,
-            "ENQ", Keycodes::ENQ,
-            "ACK", Keycodes::ACK,
-            "BEL", Keycodes::BEL,
-            "BS", Keycodes::BS,
-            "HT", Keycodes::HT,
-            "LF", Keycodes::LF,
-            "VT", Keycodes::VT,
-            "FF", Keycodes::FF,
-            "CR", Keycodes::CR,
-            "SO", Keycodes::SO,
-            "SI", Keycodes::SI,
-            "DLE", Keycodes::DLE,
-            "DC1", Keycodes::DC1,
-            "DC2", Keycodes::DC2,
-            "DC3", Keycodes::DC3,
-            "DC4", Keycodes::DC4,
-            "NAK", Keycodes::NAK,
-            "SYN", Keycodes::SYN,
-            "ETB", Keycodes::ETB,
-            "CAN", Keycodes::CAN,
-            "EM", Keycodes::EM,
-            "SUB", Keycodes::SUB,
-            "ESC", Keycodes::ESC,
-            "FS", Keycodes::FS,
-            "GS", Keycodes::GS,
-            "RS", Keycodes::RS,
-            "US", Keycodes::US,
-            "SPACE", Keycodes::SPACE,
-            "EXCLAMATION_MARK", Keycodes::EXCLAMATION_MARK,
-            "DOUBLE_QUOTE", Keycodes::DOUBLE_QUOTE,
-            "HASH", Keycodes::HASH,
-            "DOLLAR", Keycodes::DOLLAR,
-            "PERCENT", Keycodes::PERCENT,
-            "AMPERSAND", Keycodes::AMPERSAND,
-            "SINGLE_QUOTE", Keycodes::SINGLE_QUOTE,
-            "LEFT_PAREN", Keycodes::LEFT_PAREN,
-            "RIGHT_PAREN", Keycodes::RIGHT_PAREN,
-            "ASTERISK", Keycodes::ASTERISK,
-            "PLUS", Keycodes::PLUS,
-            "COMMA", Keycodes::COMMA,
-            "HYPHEN", Keycodes::HYPHEN,
-            "PERIOD", Keycodes::PERIOD,
-            "SLASH", Keycodes::SLASH,
-            "DIGIT_0", Keycodes::DIGIT_0,
-            "DIGIT_1", Keycodes::DIGIT_1,
-            "DIGIT_2", Keycodes::DIGIT_2,
-            "DIGIT_3", Keycodes::DIGIT_3,
-            "DIGIT_4", Keycodes::DIGIT_4,
-            "DIGIT_5", Keycodes::DIGIT_5,
-            "DIGIT_6", Keycodes::DIGIT_6,
-            "DIGIT_7", Keycodes::DIGIT_7,
-            "DIGIT_8", Keycodes::DIGIT_8,
-            "DIGIT_9", Keycodes::DIGIT_9,
-            "COLON", Keycodes::COLON,
-            "SEMICOLON", Keycodes::SEMICOLON,
-            "LESS_THAN", Keycodes::LESS_THAN,
-            "EQUAL", Keycodes::EQUAL,
-            "GREATER_THAN", Keycodes::GREATER_THAN,
-            "QUESTION_MARK", Keycodes::QUESTION_MARK,
-            "AT", Keycodes::AT,
-            "LEFT_BRACKET", Keycodes::LEFT_BRACKET,
-            "BACKSLASH", Keycodes::BACKSLASH,
-            "RIGHT_BRACKET", Keycodes::RIGHT_BRACKET,
-            "CARET", Keycodes::CARET,
-            "UNDERSCORE", Keycodes::UNDERSCORE,
-            "GRAVE_ACCENT", Keycodes::GRAVE_ACCENT,
-            "a", Keycodes::a,
-            "b", Keycodes::b,
-            "c", Keycodes::c,
-            "d", Keycodes::d,
-            "e", Keycodes::e,
-            "f", Keycodes::f,
-            "g", Keycodes::g,
-            "h", Keycodes::h,
-            "i", Keycodes::i,
-            "j", Keycodes::j,
-            "k", Keycodes::k,
-            "l", Keycodes::l,
-            "m", Keycodes::m,
-            "n", Keycodes::n,
-            "o", Keycodes::o,
-            "p", Keycodes::p,
-            "q", Keycodes::q,
-            "r", Keycodes::r,
-            "s", Keycodes::s,
-            "t", Keycodes::t,
-            "u", Keycodes::u,
-            "v", Keycodes::v,
-            "w", Keycodes::w,
-            "x", Keycodes::x,
-            "y", Keycodes::y,
-            "z", Keycodes::z,
-            "LEFT_BRACE", Keycodes::LEFT_BRACE,
-            "VERTICAL_BAR", Keycodes::VERTICAL_BAR,
-            "RIGHT_BRACE", Keycodes::RIGHT_BRACE,
-            "TILDE", Keycodes::TILDE,
-            "DEL", Keycodes::DEL
-        );
+        sol::table enumsTable = main_lua_state.create_table();
+        main_lua_state["Enums"] = enumsTable;
+        sol::table enumKeycodeTypeTable = main_lua_state.create_table();
+        for (const auto& [key, value] : keycodes) {
+            enumKeycodeTypeTable[key] = value;
+        }
+        main_lua_state["Enums"]["Keycodes"] = enumKeycodeTypeTable;
+        std::cout << "hi\n";
         main_lua_state.new_usertype<neptune::Object>("Object",
             "setName", [this](neptune::Object& obj, const std::string& newName) {
                 auto range = workspace.objects.equal_range(obj.name);
@@ -594,14 +498,14 @@ namespace neptune {
                 std::filesystem::create_directories(fullOutputPath);
                 continue;
             }
-            char* contents = new char[fileStat.size];
+            std::vector<char> contents(fileStat.size);
             if ((file = zip_fopen_index(za, i, ZIP_FL_UNCHANGED)) == NULL) {
                 zip_error_init_with_code(&error, err);
                 game_log("Cannot get file Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
                 return;
             }
-            zip_fread(file, contents, fileStat.size);
-            if (!std::ofstream(folderPath + std::string(fileStat.name)).write(contents, fileStat.size)) {
+            zip_fread(file, contents.data(), fileStat.size);
+            if (!std::ofstream(folderPath + std::string(fileStat.name)).write(contents.data(), fileStat.size)) {
                 game_log("Cannot write file! with path: " + std::string(fileStat.name), neptune::ERROR);
                 return;
             }
@@ -807,6 +711,10 @@ namespace neptune {
                     newObj->name = objName;
                     workspace.addObject(std::move(newObj), main_lua_state);
                 }
+            } else if (nodeName == "script") {
+                std::string scriptPath = node.attribute("path").as_string();
+                std::cout << "Script path: " << scriptPath << "\n";
+                addLuaScript(scriptPath);
             }
         }
     }
