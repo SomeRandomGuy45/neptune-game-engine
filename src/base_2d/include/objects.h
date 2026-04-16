@@ -1,10 +1,6 @@
 #pragma once
 #include <iostream>
 #include <SDL2/SDL.h>
-/*
-* When moving to using CMake the SDL2/SDL_image.h got.. f****d up
-* Don't know why
-*/
 #include <SDL_image.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>

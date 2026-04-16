@@ -9,8 +9,15 @@ like EventListener, sprite creation, keybinds, and many more..
 
 local M = {}
 
+local audio = game.Workspace:getObject("audio")
+
 function M.init()
     print("Hi!")
+    if (not audio) then
+        print("Audio object not found!")
+        return
+    end
+    audio:Play()
 end
 
 --[[

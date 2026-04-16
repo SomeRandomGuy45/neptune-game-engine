@@ -549,6 +549,12 @@ namespace neptune {
             game_log("Moving sprite data from: " + path + " to " + execDir + "/assets/sprite_data/" + dir.path().filename().string());
             std::filesystem::rename(path, execDir + "/assets/sprite_data/" + dir.path().filename().string());
         }
+        for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/scripts")) {
+            if (!dir.is_regular_file()) continue;
+            std::string path = dir.path().string();
+            game_log("Moving script from: " + path + " to " + execDir + "/assets/scripts/" + dir.path().filename().string());
+            std::filesystem::rename(path, execDir + "/assets/scripts/" + dir.path().filename().string());
+        }
         for (const auto& sceneName : sceneLoadingService.infoJson["scenes"]) {
             std::string pathToScene = folderPath + folderName + "/" + sceneName.get<std::string>() + ".scene";
             std::ifstream stream(pathToScene);
@@ -763,7 +769,7 @@ namespace neptune {
                         int y = node.attribute("y").as_int();
                         int w = node.attribute("w").as_int();
                         int h = node.attribute("h").as_int();
-                        std::string textStr = node.attribute("text").as_string();
+                        std::string textStr = node.attribute("textStr").as_string();
 
                         SDL_Color textColor = {255, 255, 255, 255};
                         if (node.attribute("textHexRbg").as_string()) {
@@ -793,9 +799,7 @@ namespace neptune {
                             backgroundColor.a = static_cast<Uint8>(transparencyValue * 255);
                         }
 
-                        newObj = std::make_unique<neptune::Text>(x, y, w, h, textStr);
-                        static_cast<neptune::Text*>(newObj.get())->setTextColor(textColor);
-                        static_cast<neptune::Text*>(newObj.get())->setBackgroundColor(backgroundColor);
+                        newObj = std::make_unique<neptune::Text>(x, y, w, h, textStr, "FreeSans", textColor, backgroundColor);
                         if (node.attribute("zIndex").as_string()) {
                             newObj->setZIndex(node.attribute("zIndex").as_int());
                         } else {                            
@@ -815,6 +819,22 @@ namespace neptune {
                 std::string scriptPath = node.attribute("path").as_string();
                 std::cout << "Script path: " << scriptPath << "\n";
                 addLuaScript(scriptPath);
+            } else if (nodeName == "listener") {
+                std::unique_ptr<neptune::EventListener> newListener = std::make_unique<neptune::EventListener>();
+                newListener->name = node.attribute("name").as_string();
+                std::cout << "Listener name: " << newListener->name << "\n";
+                workspace.addBaseObject(std::move(newListener), main_lua_state);
+            } else if (nodeName == "audio") {
+                std::string audioPath = node.attribute("path").as_string();
+                std::unique_ptr<neptune::Audio> newAudio = std::make_unique<neptune::Audio>(audioPath);
+                newAudio->name = node.attribute("name").as_string();
+                std::cout << "Audio path: " << audioPath << "\n";
+                if (node.attribute("isLooping").as_string()) {
+                    std::string isLoopingStr = node.attribute("isLooping").as_string();
+                    bool isLoopingValue = (isLoopingStr == "true" || isLoopingStr == "1");
+                    newAudio->SetLoop(isLoopingValue);
+                }
+                workspace.addBaseObject(std::move(newAudio), main_lua_state);
             }
         }
     }
