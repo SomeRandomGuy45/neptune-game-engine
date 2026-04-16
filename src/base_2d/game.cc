@@ -703,6 +703,106 @@ namespace neptune {
                         break;
                     }
 
+                    case objectTypes::TRIANGLE: {
+                        int x = node.attribute("x").as_int();
+                        int y = node.attribute("y").as_int();
+                        int w = node.attribute("w").as_int();
+                        int h = node.attribute("h").as_int();
+
+                        SDL_Color color = {255, 255, 255, 255};
+                        if (node.attribute("hexRbg").as_string()) {
+                            std::string colorStr = std::string(node.attribute("hexRbg").as_string()).substr(1); // Remove the '#' character
+                            unsigned long colorValue = std::stoul(colorStr, nullptr, 16);
+                            color.r = (colorValue >> 16) & 0xFF;
+                            color.g = (colorValue >> 8) & 0xFF;
+                            color.b = colorValue & 0xFF;
+                        }
+                        if (node.attribute("transparency").as_string()) {
+                            std::string transparencyStr = node.attribute("transparency").as_string();
+                            float transparencyValue = std::stof(transparencyStr);
+                            color.a = static_cast<Uint8>(transparencyValue * 255);
+                        }
+                        newObj = std::make_unique<neptune::Triangle>(x, y, w, h, color);
+                        if (node.attribute("zIndex").as_string()) {
+                            newObj->setZIndex(node.attribute("zIndex").as_int());
+                        } else {
+                            newObj->setZIndex(0);
+                        }
+                        break;
+                    }
+
+                    case objectTypes::CIRCLE: {
+                        int x = node.attribute("x").as_int();
+                        int y = node.attribute("y").as_int();
+                        int radius = node.attribute("r").as_int();
+
+                        SDL_Color color = {255, 255, 255, 255};
+                        if (node.attribute("hexRbg").as_string()) {
+                            std::string colorStr = std::string(node.attribute("hexRbg").as_string()).substr(1); // Remove the '#' character
+                            unsigned long colorValue = std::stoul(colorStr, nullptr, 16);
+                            color.r = (colorValue >> 16) & 0xFF;
+                            color.g = (colorValue >> 8) & 0xFF;
+                            color.b = colorValue & 0xFF;
+                        }
+                        if (node.attribute("transparency").as_string()) {
+                            std::string transparencyStr = node.attribute("transparency").as_string();
+                            float transparencyValue = std::stof(transparencyStr);
+                            color.a = static_cast<Uint8>(transparencyValue * 255);
+                        }
+                        newObj = std::make_unique<neptune::Circle>(x, y, radius, color);
+                        if (node.attribute("zIndex").as_string()) {
+                            newObj->setZIndex(node.attribute("zIndex").as_int());
+                        } else {
+                            newObj->setZIndex(0);
+                        }
+                        break;
+                    }
+
+                    case objectTypes::TEXT: {
+                        int x = node.attribute("x").as_int();
+                        int y = node.attribute("y").as_int();
+                        int w = node.attribute("w").as_int();
+                        int h = node.attribute("h").as_int();
+                        std::string textStr = node.attribute("text").as_string();
+
+                        SDL_Color textColor = {255, 255, 255, 255};
+                        if (node.attribute("textHexRbg").as_string()) {
+                            std::string colorStr = std::string(node.attribute("textHexRbg").as_string()).substr(1); // Remove the '#' character
+                            unsigned long colorValue = std::stoul(colorStr, nullptr, 16);
+                            textColor.r = (colorValue >> 16) & 0xFF;
+                            textColor.g = (colorValue >> 8) & 0xFF;
+                            textColor.b = colorValue & 0xFF;
+                        }
+                        if (node.attribute("textTransparency").as_string()) {
+                            std::string transparencyStr = node.attribute("textTransparency").as_string();
+                            float transparencyValue = std::stof(transparencyStr);
+                            textColor.a = static_cast<Uint8>(transparencyValue * 255);
+                        }
+
+                        SDL_Color backgroundColor = {0, 0, 0, 0};
+                        if (node.attribute("hexRbg").as_string()) {
+                            std::string colorStr = std::string(node.attribute("hexRbg").as_string()).substr(1); // Remove the '#' character
+                            unsigned long colorValue = std::stoul(colorStr, nullptr, 16);
+                            backgroundColor.r = (colorValue >> 16) & 0xFF;
+                            backgroundColor.g = (colorValue >> 8) & 0xFF;
+                            backgroundColor.b = colorValue & 0xFF;
+                        }
+                        if (node.attribute("transparency").as_string()) {
+                            std::string transparencyStr = node.attribute("transparency").as_string();
+                            float transparencyValue = std::stof(transparencyStr);
+                            backgroundColor.a = static_cast<Uint8>(transparencyValue * 255);
+                        }
+
+                        newObj = std::make_unique<neptune::Text>(x, y, w, h, textStr);
+                        static_cast<neptune::Text*>(newObj.get())->setTextColor(textColor);
+                        static_cast<neptune::Text*>(newObj.get())->setBackgroundColor(backgroundColor);
+                        if (node.attribute("zIndex").as_string()) {
+                            newObj->setZIndex(node.attribute("zIndex").as_int());
+                        } else {                            
+                            newObj->setZIndex(0);
+                        }
+                        break;
+                    }
                         
                     default: {
                         break;
