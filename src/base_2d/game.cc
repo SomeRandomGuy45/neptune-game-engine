@@ -244,7 +244,6 @@ namespace neptune {
             enumKeycodeTypeTable[key] = value;
         }
         main_lua_state["Enums"]["Keycodes"] = enumKeycodeTypeTable;
-        std::cout << "hi\n";
         main_lua_state.new_usertype<neptune::Object>("Object",
             "setName", [this](neptune::Object& obj, const std::string& newName) {
                 auto range = workspace.objects.equal_range(obj.name);
@@ -579,6 +578,10 @@ namespace neptune {
             sol::table module = script();
             sol::protected_function init_func = module["init"];
             sol::protected_function update_func = module["update"];
+            bool moduleBlock = module["isModule"];
+            if (moduleBlock) {
+                continue;
+            }
             if (!init_func.valid()) {
                 game_log("init func is not valid or is empty", neptune::ERROR);
                 continue;
