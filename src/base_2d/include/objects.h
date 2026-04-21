@@ -118,7 +118,7 @@ public:
     Audio(std::string _path) {
         if (!NEPTUNE_MUSIC_INIT) {
             if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
-                game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::ERROR);
+                game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::FAULT);
             }
             Mix_AllocateChannels(32);
             NEPTUNE_MUSIC_INIT = true;
@@ -128,7 +128,7 @@ public:
         std::string newPath = execDir + "/assets/audio/" + _path;
         chunk.reset(Mix_LoadWAV(newPath.c_str()));
         if (!chunk.get()) {
-            game_log("Couldn't load music! SDL Error: " + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't load music! SDL Error: " + std::string(SDL_GetError()), neptune::FAULT);
         }
         name = "Audio";
     }

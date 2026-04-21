@@ -28,14 +28,14 @@ void Audio::Play() {
         return;
     }
     if (channel == -2) {
-        game_log("Audio is gone!", neptune::ERROR);
+        game_log("Audio is gone!", neptune::FAULT);
         return;
     }
     int num = loopAmount;
     num = loop ? 0 : 1; // -1 to play indefinitely, 1 to play once, done with the sub 1 in the play chan func
     channel = Mix_PlayChannel(-1, chunk.get(), num - 1);
     if (channel == -1) {
-        game_log("Error playing audio! " + std::string(Mix_GetError()), neptune::ERROR);
+        game_log("Error playing audio! " + std::string(Mix_GetError()), neptune::FAULT);
         return;
     }
     music_state = PLAYING;
@@ -51,7 +51,7 @@ void Audio::Stop() {
         return;
     }
     if (channel == -2) {
-        game_log("Audio is gone!", neptune::ERROR);
+        game_log("Audio is gone!", neptune::FAULT);
         return;
     }
     Mix_Pause(channel);
@@ -273,7 +273,7 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
     if (texture == nullptr) {
         SDL_Surface* loadedSurface = IMG_Load(filePath.c_str());
         if (!loadedSurface) {
-            game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
             return;
         }
 
@@ -281,7 +281,7 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
         SDL_FreeSurface(loadedSurface);
 
         if (!texture) {
-            game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
         }
     }
     
@@ -328,22 +328,22 @@ void Text::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, C
 {
     if (texture == nullptr) {
         if (fonts.count(fontName) == 0) {
-            game_log("Font doesn't exists!", neptune::ERROR);
+            game_log("Font doesn't exists!", neptune::FAULT);
             return;
         }
         if (fonts[fontName] == NULL) {
-            game_log("Font is null!", neptune::ERROR);
+            game_log("Font is null!", neptune::FAULT);
             return;
         }
         SDL_Surface* surface = TTF_RenderUTF8_LCD(fonts[fontName], text.c_str(), text_color, background_color);
         if (!surface) {
-            game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
             return;
         }
         texture = SDL_CreateTextureFromSurface(renderer, surface);
         SDL_FreeSurface(surface);
         if (!texture) {
-            game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::ERROR);
+            game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
         }
     }   
     float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);

@@ -39,7 +39,7 @@ enum NEPTUNE_LOGLEVEL {
     DEFAULT,
     DEBUG,
     WARNING,
-    ERROR,
+    FAULT,
     CRITICAL // last thing the game would see... if critical we just kill it...
 };
 

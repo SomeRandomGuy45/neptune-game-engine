@@ -187,9 +187,9 @@ namespace neptune {
                 try {
                     func();
                 } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                    game_log("Caught error: " + std::string(e.what()), neptune::FAULT);
                 } catch (...) {
-                    game_log("Caught unknown error!", neptune::ERROR);
+                    game_log("Caught unknown error!", neptune::FAULT);
                 }
             }
              // Start the Dear ImGui frame
@@ -477,13 +477,13 @@ namespace neptune {
 
         if ((za = zip_open(gamePath.c_str(), 0, &err)) == NULL) {
             zip_error_init_with_code(&error, err);
-            game_log("Cannot open place at: " + gamePath + "  Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
+            game_log("Cannot open place at: " + gamePath + "  Reason: " + std::string(zip_error_strerror(&error)), neptune::FAULT);
             return;
         }
         for (zip_int64_t i = 0; i < zip_get_num_entries(za, ZIP_FL_UNCHANGED); i++) {
             if (zip_stat_index(za, i, ZIP_FL_UNCHANGED, &fileStat) == -1) {
                 zip_error_init_with_code(&error, err);
-                game_log("Cannot get file state Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
+                game_log("Cannot get file state Reason: " + std::string(zip_error_strerror(&error)), neptune::FAULT);
                 return;
             }
             std::string fullOutputPath = folderPath + fileStat.name;
@@ -500,28 +500,28 @@ namespace neptune {
             std::vector<char> contents(fileStat.size);
             if ((file = zip_fopen_index(za, i, ZIP_FL_UNCHANGED)) == NULL) {
                 zip_error_init_with_code(&error, err);
-                game_log("Cannot get file Reason: " + std::string(zip_error_strerror(&error)), neptune::ERROR);
+                game_log("Cannot get file Reason: " + std::string(zip_error_strerror(&error)), neptune::FAULT);
                 return;
             }
             zip_fread(file, contents.data(), fileStat.size);
             if (!std::ofstream(folderPath + std::string(fileStat.name)).write(contents.data(), fileStat.size)) {
-                game_log("Cannot write file! with path: " + std::string(fileStat.name), neptune::ERROR);
+                game_log("Cannot write file! with path: " + std::string(fileStat.name), neptune::FAULT);
                 return;
             }
         }
         zip_close(za);
         if (!isVaildGame(folderPath + folderName + "/")) {
-            game_log("Unable to load place! Reason: Is not vaild game!", neptune::ERROR);
+            game_log("Unable to load place! Reason: Is not vaild game!", neptune::FAULT);
             return;
         }
         std::ifstream mainJson(folderPath + folderName + "/main.json");
         if (!mainJson.is_open()) {
-            game_log("Unable to open main.json!", neptune::ERROR);
+            game_log("Unable to open main.json!", neptune::FAULT);
             return;
         }
         std::ifstream configJson(folderPath + folderName + "/config.json");
         if (!configJson.is_open()) {
-            game_log("Unable to open config.json!", neptune::ERROR);
+            game_log("Unable to open config.json!", neptune::FAULT);
             return;
         }
         sceneLoadingService.infoJson = json::parse(mainJson);
@@ -578,12 +578,14 @@ namespace neptune {
             sol::table module = script();
             sol::protected_function init_func = module["init"];
             sol::protected_function update_func = module["update"];
-            bool moduleBlock = module["isModule"];
-            if (moduleBlock) {
-                continue;
+            auto moduleBlock = module["isModule"];
+            if (moduleBlock.valid()) {
+                if (typeid(moduleBlock) == typeid(bool) && moduleBlock.get<bool>() == true) {
+                    continue;
+                }
             }
             if (!init_func.valid()) {
-                game_log("init func is not valid or is empty", neptune::ERROR);
+                game_log("init func is not valid or is empty", neptune::FAULT);
                 continue;
             }
             std::thread([init_func, &lua_mutex]() {
@@ -591,9 +593,9 @@ namespace neptune {
                     std::unique_lock<std::shared_mutex> lock(lua_mutex);
                     init_func();
                 } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::ERROR);
+                    game_log("Caught error: " + std::string(e.what()), neptune::FAULT);
                 } catch (...) {
-                    game_log("Caught unknown error!", neptune::ERROR);
+                    game_log("Caught unknown error!", neptune::FAULT);
                 }
             }).detach();
             game_log("Ran init function for: " + file);

@@ -35,9 +35,9 @@ void game_log(const std::string& message, neptune::NEPTUNE_LOGLEVEL level) {
             std::cout << BOLD(FYEL("[WARNING] ")) << message << std::endl;
             log_file << "[WARNING] " << message << std::endl;
             break;
-        case neptune::ERROR:
-            std::cerr << BOLD(FRED("[ERROR] ")) << message << std::endl;
-            log_file << "[ERROR] " << message << std::endl;
+        case neptune::FAULT:
+            std::cerr << BOLD(FRED("[FAULT] ")) << message << std::endl;
+            log_file << "[FAULT] " << message << std::endl;
             break;
         case neptune::CRITICAL:
             std::cerr <<  BOLD(FRED("[CRITICAL] ")) << message << std::endl;
