@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <filesystem>
 #include <SDL2/SDL.h>
 #include <SDL_image.h>
 #include <SDL_mixer.h>
@@ -276,10 +277,10 @@ public:
                 game_log("Looking for fonts in: " + execDir + "/assets/fonts");
                 for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/fonts")) {
                     if (dir.is_regular_file() && dir.path().extension() == ".ttf") {
-                        std::string fontName = dir.path().filename();
+                        std::string fontName = dir.path().filename().string();
                         fontName = fontName.substr(0, fontName.length() - 4);
                         game_log("Loading file: " + fontName + " Dir: " + dir.path().string());
-                        fonts.insert({fontName, TTF_OpenFont(dir.path().c_str(), 24)});
+                        fonts.insert({fontName, TTF_OpenFont(dir.path().string().c_str(), 24)});
                     }
                 }
                 //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});

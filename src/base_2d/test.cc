@@ -28,7 +28,7 @@ void initTestGame(neptune::Game& game) {
     game.addObject(std::move(textTest));
 }
 
-int main(int argc, char **argv) {
+int runApp(int argc, char **argv) {
     neptune::debugFunction_01();
     const char* filePath = neptune::getFileFromPicker();
     if (filePath == nullptr) {
@@ -45,3 +45,19 @@ int main(int argc, char **argv) {
     game.init();
     return 0;
 }
+
+#ifndef _WIN32
+
+int main(int argc, char** argv) {
+    return runApp(argc, argv);
+}
+
+#else
+
+#include <windows.h>
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    return runApp(__argc, __argv);
+}
+
+#endif
