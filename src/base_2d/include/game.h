@@ -211,7 +211,7 @@ namespace neptune {
         json configJson;
 
         void insertScene(const std::string& name, pugi::xml_document&& doc);
-        pugi::xml_document& getAllScenes(const std::string& name);
+        pugi::xml_document& getScene(const std::string& name);
     private:
         /*
         * To keep it simple, the scene data is stored like this
@@ -238,9 +238,12 @@ namespace neptune {
 
     class InputService {
     public:
+        void bindKeybind(int key, sol::protected_function func);
+        void runKeybindFunc(int key);
         void setCurrentKeyDown(int key) { currentKeyDown = key; }
         int getKeyDown();
     private:
+        std::map<int, sol::protected_function> keybinds;
         int currentKeyDown = -1;
     };
 

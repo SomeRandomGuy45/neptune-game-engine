@@ -26,6 +26,24 @@ namespace neptune {
         return currentNum;
     }
 
+    void InputService::bindKeybind(int key, sol::protected_function func) {
+        game_log("Binding key: " + std::to_string(key));
+        keybinds[key] = func;
+    }
+
+    void InputService::runKeybindFunc(int key) {
+        auto it = keybinds.find(key);
+        if (it != keybinds.end()) {
+            try {
+                it->second();
+            } catch (const sol::error& e) {
+                game_log("Caught error in keybind function: " + std::string(e.what()), neptune::FAULT);
+            } catch (...) {
+                game_log("Caught unknown error in keybind function!", neptune::FAULT);
+            }
+        }
+    }
+
     void* Linker_Service::loadLib(const std::string& libName) {
         return LIB_LOAD(libName.c_str());
     }
@@ -172,6 +190,7 @@ namespace neptune {
                 }
                 if (e.type == SDL_KEYDOWN) {
                     inputService.setCurrentKeyDown(static_cast<int>(e.key.keysym.sym));
+                    inputService.runKeybindFunc(static_cast<int>(e.key.keysym.sym));
                 }
             }
             for (const auto& func : updateFuncs) {
@@ -395,7 +414,8 @@ namespace neptune {
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<InputService>("InputService",
-            "getKeyDown", &InputService::getKeyDown
+            "getKeyDown", &InputService::getKeyDown,
+            "bindKeybind", &InputService::bindKeybind
         );
         main_lua_state.new_usertype<Workspace>("Workspace",
             "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
@@ -646,12 +666,12 @@ namespace neptune {
     void SceneLoadingService::insertScene(const std::string& name, pugi::xml_document&& doc) {
         sceneData[name] = std::move(doc);
     }
-    pugi::xml_document& SceneLoadingService::getAllScenes(const std::string& name) {
+    pugi::xml_document& SceneLoadingService::getScene(const std::string& name) {
         return sceneData[name];
     }
     void Game::loadNewScene(const std::string& newScene)
     {
-        pugi::xml_document& doc = sceneLoadingService.getAllScenes(newScene);
+        pugi::xml_document& doc = sceneLoadingService.getScene(newScene);
         for (pugi::xml_node node : doc.child("game").children()) {
             std::string nodeName = node.name();
             game_log("Node Name: " + nodeName);

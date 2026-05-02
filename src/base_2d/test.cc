@@ -30,8 +30,9 @@ void initTestGame(neptune::Game& game) {
 
 int runApp(int argc, char **argv) {
     neptune::debugFunction_01();
-    neptune::Game game;
+    neptune::fixActivationPolicyFunc();
     const char* filePath = neptune::getFileFromPicker();
+    neptune::Game game;
     if (filePath == nullptr) {
         neptune::game_log("No file stuff was selected, or user is on unsupported platform", neptune::WARNING);
         game.loadGame_DEBUG("exampleProject.project", true);

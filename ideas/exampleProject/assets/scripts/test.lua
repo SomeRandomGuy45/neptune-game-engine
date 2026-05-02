@@ -25,6 +25,23 @@ function M.init()
     end
     print("We have our box!")
     print(Enums.Keycodes.w)
+    game.InputService:bindKeybind(Enums.Keycodes.w, function()
+        currentPos:setY(currentPos:getY() - 2.5)
+        box:setPosition(currentPos)
+    end)
+    game.InputService:bindKeybind(Enums.Keycodes.s, function()
+        currentPos:setY(currentPos:getY() + 2.5)
+        box:setPosition(currentPos)
+    end)
+    game.InputService:bindKeybind(Enums.Keycodes.a, function()
+        currentPos:setX(currentPos:getX() - 2.5)
+        box:setPosition(currentPos)
+    end)
+    game.InputService:bindKeybind(Enums.Keycodes.d, function()
+        currentPos:setX(currentPos:getX() + 2.5)
+        box:setPosition(currentPos)
+    end)
+    print("Init function is done!")
 end
 
 --[[
@@ -37,13 +54,25 @@ This **should** help prevent the usage of using while true loops
 function M.update()
     --print("update called!")
     if (not box) then return end
+    --[[
     local currentKey = game.InputService:getKeyDown()
     if (currentKey ~= -1) then 
         if (currentKey == Enums.Keycodes.w) then
             currentPos:setY(currentPos:getY() - 2.5)
             box:setPosition(currentPos)
+        elseif (currentKey == Enums.Keycodes.s) then
+            currentPos:setY(currentPos:getY() + 2.5)
+            box:setPosition(currentPos)
+        elseif (currentKey == Enums.Keycodes.a) then
+            currentPos:setX(currentPos:getX() - 2.5)
+            box:setPosition(currentPos)
+        elseif (currentKey == Enums.Keycodes.d) then
+            currentPos:setX(currentPos:getX() + 2.5)
+            box:setPosition(currentPos)
         end
     end
+    ]]
+    game.Workspace:setCamera(currentPos:getX(), currentPos:getY()) 
 end
 
 return M

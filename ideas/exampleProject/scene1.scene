@@ -11,7 +11,7 @@
     -->
     <script name="testLua" path="test.lua"></script>
     <object type="box" name="box" x="50" y="50" w="50" h="50" zIndex="5" hexRbg="#FF0000" transparency="1"></object>
-    <object type="sprite" name="superCoolSprite" x="200" y="50" w="50" h="50" path="testImg.png" transparency="1"></object>
+    <object type="sprite" name="superCoolSprite" x="200" y="50" w="50" h="50" path="testImg.png" transparency="1" zIndex="200"></object>
     <object type="triangle" name="triangle" x="50" y="50" w="50" h="50" zIndex="10" hexRbg="#00FF00" transparency="1"></object>
     <object type="circle" name="circle" x="-200" y="50" r="25" hexRbg="#0000FF" transparency="1"></object>
     <object type="text" name="text" x="0" y="150" w="200" h="50" textStr="Hello, Neptune!" textHexRbg="#FFFF00" textTransparency="1" hexRbg="#000000" transparency="1"></object>
