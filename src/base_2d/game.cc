@@ -41,10 +41,6 @@ namespace neptune {
         return LIB_LOAD(libName.c_str());
     }
 
-    void* Linker_Service::getFunc(void* lib, const std::string& funcName) {
-        return LIB_GETFUNC(lib, funcName.c_str());
-    }
-
     int Linker_Service::removeLib(void *lib)
     {
         return LIB_UNLOAD(lib);
@@ -161,6 +157,14 @@ namespace neptune {
                 if (e.type == SDL_QUIT) {
                     quit = true;
                     break;
+                }
+                if (e.type == SDL_WINDOWEVENT) {
+                    if (e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+                        SCREEN_WIDTH = e.window.data1;
+                        SCREEN_HEIGHT = e.window.data2;
+                        io.DisplaySize = ImVec2((float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+                        SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+                    }
                 }
                 if (e.type == SDL_MOUSEBUTTONDOWN) {
                     int mouseX, mouseY;
@@ -450,6 +454,18 @@ namespace neptune {
         main_lua_state["game"] = this;
         game_log("Made Lua engine");
     }
+    void Game::moveFile(const std::string& outputDirType, const std::string& folderName, const std::string& folderPath, const std::string& execDir) {
+        if (!std::filesystem::exists(folderPath + folderName + "/assets/" + outputDirType)) {
+            game_log("Warning: No " + outputDirType + " directory found in place! Skipping...", neptune::WARNING);
+            return;
+        }
+        for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/" + outputDirType)) {
+            if (!dir.is_regular_file()) continue;
+            std::string path = dir.path().string();
+            game_log("Moving file from: " + path + " to " + execDir + "/assets/" + outputDirType + "/" + dir.path().filename().string());
+            std::filesystem::rename(path, execDir + "/assets/" + outputDirType + "/" + dir.path().filename().string());
+        }
+    }
     // TODO... remove this function and make a better way to load games
     void Game::loadGame_DEBUG(std::string gamePath)
     {
@@ -542,18 +558,10 @@ namespace neptune {
             game_log("Got no scene data or its not a array! Quitting!", neptune::CRITICAL);
             return;
         }
-        for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/sprite_data")) {
-            if (!dir.is_regular_file()) continue;
-            std::string path = dir.path().string();
-            game_log("Moving sprite data from: " + path + " to " + execDir + "/assets/sprite_data/" + dir.path().filename().string());
-            std::filesystem::rename(path, execDir + "/assets/sprite_data/" + dir.path().filename().string());
-        }
-        for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/scripts")) {
-            if (!dir.is_regular_file()) continue;
-            std::string path = dir.path().string();
-            game_log("Moving script from: " + path + " to " + execDir + "/assets/scripts/" + dir.path().filename().string());
-            std::filesystem::rename(path, execDir + "/assets/scripts/" + dir.path().filename().string());
-        }
+        moveFile("sprite_data", folderName, folderPath, execDir);
+        moveFile("scripts", folderName, folderPath, execDir);
+        moveFile("fonts", folderName, folderPath, execDir);
+        moveFile("audio", folderName, folderPath, execDir);
         for (const auto& sceneName : sceneLoadingService.infoJson["scenes"]) {
             std::string pathToScene = folderPath + folderName + "/" + sceneName.get<std::string>() + ".scene";
             std::ifstream stream(pathToScene);
@@ -653,7 +661,7 @@ namespace neptune {
     pugi::xml_document& SceneLoadingService::getAllScenes(const std::string& name) {
         return sceneData[name];
     }
-    void Game::loadNewScene(std::string newScene)
+    void Game::loadNewScene(const std::string& newScene)
     {
         pugi::xml_document& doc = sceneLoadingService.getAllScenes(newScene);
         for (pugi::xml_node node : doc.child("game").children()) {
@@ -672,10 +680,10 @@ namespace neptune {
                     switch (objTypeEnum) {
                         
                     case objectTypes::BOX: {
-                        int x = node.attribute("x").as_int();
-                        int y = node.attribute("y").as_int();
-                        int w = node.attribute("w").as_int();
-                        int h = node.attribute("h").as_int();
+                        float x = node.attribute("x").as_float();
+                        float y = node.attribute("y").as_float();
+                        float w = node.attribute("w").as_float();
+                        float h = node.attribute("h").as_float();
 
                         SDL_Color color = {255, 255, 255, 255};
                         if (node.attribute("hexRbg").as_string()) {
@@ -700,10 +708,10 @@ namespace neptune {
                     }
 
                     case objectTypes::SPRITE: {
-                        int x = node.attribute("x").as_int();
-                        int y = node.attribute("y").as_int();
-                        int w = node.attribute("w").as_int();
-                        int h = node.attribute("h").as_int();
+                        float x = node.attribute("x").as_float();
+                        float y = node.attribute("y").as_float();
+                        float w = node.attribute("w").as_float();
+                        float h = node.attribute("h").as_float();
                         std::string spritePath = node.attribute("path").as_string();
                         newObj = std::make_unique<neptune::Sprite>(spritePath, x, y, w, h);
                         if (node.attribute("zIndex").as_string()) {
@@ -715,10 +723,10 @@ namespace neptune {
                     }
 
                     case objectTypes::TRIANGLE: {
-                        int x = node.attribute("x").as_int();
-                        int y = node.attribute("y").as_int();
-                        int w = node.attribute("w").as_int();
-                        int h = node.attribute("h").as_int();
+                        float x = node.attribute("x").as_float();
+                        float y = node.attribute("y").as_float();
+                        float w = node.attribute("w").as_float();
+                        float h = node.attribute("h").as_float();
 
                         SDL_Color color = {255, 255, 255, 255};
                         if (node.attribute("hexRbg").as_string()) {
@@ -743,9 +751,9 @@ namespace neptune {
                     }
 
                     case objectTypes::CIRCLE: {
-                        int x = node.attribute("x").as_int();
-                        int y = node.attribute("y").as_int();
-                        int radius = node.attribute("r").as_int();
+                        float x = node.attribute("x").as_float();
+                        float y = node.attribute("y").as_float();
+                        float radius = node.attribute("r").as_float();
 
                         SDL_Color color = {255, 255, 255, 255};
                         if (node.attribute("hexRbg").as_string()) {
@@ -770,10 +778,10 @@ namespace neptune {
                     }
 
                     case objectTypes::TEXT: {
-                        int x = node.attribute("x").as_int();
-                        int y = node.attribute("y").as_int();
-                        int w = node.attribute("w").as_int();
-                        int h = node.attribute("h").as_int();
+                        float x = node.attribute("x").as_float();
+                        float y = node.attribute("y").as_float();
+                        float w = node.attribute("w").as_float();
+                        float h = node.attribute("h").as_float();
                         std::string textStr = node.attribute("textStr").as_string();
 
                         SDL_Color textColor = {255, 255, 255, 255};

@@ -208,7 +208,7 @@ private:
 
 class Circle : public Object {
 public:
-    Circle(int _x, int _y, int _radius, SDL_Color _color)
+    Circle(float _x, float _y, float _radius, SDL_Color _color)
         : x(_x), y(_y), radius(_radius), color(_color) {
             name = "Circle";
     }
@@ -225,7 +225,7 @@ public:
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     std::list<sol::protected_function> mouseCallbacks;
-    int x, y, radius;
+    float x, y, radius;
     SDL_Color color{0,0,0,0};
 };
 

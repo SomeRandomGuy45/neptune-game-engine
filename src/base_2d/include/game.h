@@ -229,7 +229,10 @@ namespace neptune {
         std::vector<std::string> returnAllFunctionsFromLink(const std::string& libName);
     private:
         void* loadLib(const std::string& libName);
-        void* getFunc(void* lib, const std::string& funcName);;
+        template <typename Func>
+        Func getFunc(void* lib, const std::string& funcName) {
+            return reinterpret_cast<Func>(LIB_GETFUNC(lib, funcName.c_str()));
+        }
         int removeLib(void* lib);
     };
 
@@ -273,13 +276,14 @@ namespace neptune {
             workspace.addBaseObject(std::move(obj), main_lua_state);
         }
         void loadGame_DEBUG(std::string gamePath);
-        void loadNewScene(std::string newScene);
+        void loadNewScene(const std::string& newScene);
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
         // SDL_WINDOW_FULLSCREEN and SDL_WINDOW_RESIZABLE are the only ones we can use
         Uint32 flags = SCREEN_VALUE | SCREEN_VALUE_2;
     private:
         void render(ImGuiIO& io);
+        void moveFile(const std::string& outputDirType, const std::string& folderName, const std::string& folderPath, const std::string& execDir);
         
         bool showDemoWin = (USE_DEBUG_DEMO_WIN && GLOBAL_DEBUG);
         bool isDebug = GLOBAL_DEBUG;

@@ -13,7 +13,7 @@
 #define LIB_EXT ".dll"
 #define LIB_LOAD(name) LoadLibraryA(name)
 #define LIB_UNLOAD(lib) FreeLibrary((HMODULE)lib)
-#define LIB_GETFUNC(lib, func_name) reinterpret_cast<void*>(GetProcAddress((HMODULE)lib, func_name))
+#define LIB_GETFUNC(lib, func_name) GetProcAddress((HMODULE)lib, func_name)
 #define OS "WIN"
 #else
 #include <unistd.h>
