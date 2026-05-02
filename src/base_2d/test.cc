@@ -41,7 +41,7 @@ int runApp(int argc, char **argv) {
         game.loadGame_DEBUG(filePath, false);
     }
     game.initLua();
-    game.loadNewScene("scene1");
+    game.loadNewScene();
     //initTestGame(game);
     game.init();
     delete filePath;

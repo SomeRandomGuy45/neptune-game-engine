@@ -278,7 +278,7 @@ namespace neptune {
             workspace.addBaseObject(std::move(obj), main_lua_state);
         }
         void loadGame_DEBUG(std::string gamePath, bool fixPath);
-        void loadNewScene(const std::string& newScene);
+        void loadNewScene(const std::string& newScene = "");
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
         // SDL_WINDOW_FULLSCREEN and SDL_WINDOW_RESIZABLE are the only ones we can use

@@ -671,7 +671,12 @@ namespace neptune {
     }
     void Game::loadNewScene(const std::string& newScene)
     {
-        pugi::xml_document& doc = sceneLoadingService.getScene(newScene);
+        std::string workingSceneName = newScene;
+        if (workingSceneName.empty()) {
+            game_log("Scene name is empty! Falling back to default scene", neptune::WARNING);
+            workingSceneName = sceneLoadingService.defaultScene;
+        }
+        pugi::xml_document& doc = sceneLoadingService.getScene(workingSceneName);
         for (pugi::xml_node node : doc.child("game").children()) {
             std::string nodeName = node.name();
             game_log("Node Name: " + nodeName);
