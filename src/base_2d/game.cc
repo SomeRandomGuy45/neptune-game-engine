@@ -20,21 +20,10 @@ namespace neptune {
         {"text", TEXT}
     };
 
-    void InputService::addToList(unsigned char keyInput, sol::protected_function func)
-    {
-        keyList[keyInput].push_back(func);
-    }
-
-    void InputService::clearList() {
-        keyList.clear();
-    }
-
-    std::list<sol::protected_function> InputService::returnListFromKey(unsigned char key)
-    {
-        if (keyList.count(key) != 0) {
-            return keyList[key];
-        }
-        return std::list<sol::protected_function>();
+    int InputService::getKeyDown() {
+        int currentNum = currentKeyDown;
+        currentKeyDown = -1;
+        return currentNum;
     }
 
     void* Linker_Service::loadLib(const std::string& libName) {
@@ -182,9 +171,7 @@ namespace neptune {
                     }
                 }
                 if (e.type == SDL_KEYDOWN) {
-                    for (const auto& callback : inputService.returnListFromKey(e.key.keysym.sym)) { 
-                        callback();
-                    }
+                    inputService.setCurrentKeyDown(static_cast<int>(e.key.keysym.sym));
                 }
             }
             for (const auto& func : updateFuncs) {
@@ -216,7 +203,6 @@ namespace neptune {
         updateFuncs.clear();
         workspace.objects.clear();
         workspace.objects_base.clear();
-        inputService.clearList();
         luaScripts.clear();
         game_log("Cleared lua!");
         ImGui_ImplSDLRenderer2_Shutdown();
@@ -409,7 +395,7 @@ namespace neptune {
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<InputService>("InputService",
-            "addKeybind", &InputService::addToList
+            "getKeyDown", &InputService::getKeyDown
         );
         main_lua_state.new_usertype<Workspace>("Workspace",
             "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
@@ -467,7 +453,7 @@ namespace neptune {
         }
     }
     // TODO... remove this function and make a better way to load games
-    void Game::loadGame_DEBUG(std::string gamePath)
+    void Game::loadGame_DEBUG(std::string gamePath, bool fixPath)
     {
         if (!isDebug) {
             game_log("Tried to call function thats only allowed in DEBUG!", neptune::CRITICAL);
@@ -481,9 +467,11 @@ namespace neptune {
         std::string parentPath;
         std::string lastParentPath;
         std::string execDir = std::filesystem::path(getExecutablePath()).parent_path().string();
-        std::string folderName = gamePath.substr(0, gamePath.length() - (std::filesystem::path(gamePath).extension().string().length()));
+        std::string folderName = std::filesystem::path(gamePath).stem().string();
         std::string folderPath = execDir + "/assets/projects/"  + folderName + "/";
-        gamePath = execDir + "/assets/projects/" + gamePath;
+        if (fixPath) {
+            gamePath = execDir + "/assets/projects/" + gamePath;
+        }
         game_log("Extracting place to: " + folderPath + " From: " + gamePath);
         zip_stat_init(&fileStat);
 

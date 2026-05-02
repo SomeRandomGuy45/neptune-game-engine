@@ -238,11 +238,10 @@ namespace neptune {
 
     class InputService {
     public:
-        void addToList(unsigned char keyInput, sol::function func);
-        void clearList();
-        std::list<sol::function> returnListFromKey(unsigned char key);
+        void setCurrentKeyDown(int key) { currentKeyDown = key; }
+        int getKeyDown();
     private:
-        std::unordered_map<unsigned char, std::list<sol::function>> keyList;
+        int currentKeyDown = -1;
     };
 
     class Workspace {
@@ -275,7 +274,7 @@ namespace neptune {
         void addBaseObject(std::unique_ptr<neptune::BaseObject> obj) {
             workspace.addBaseObject(std::move(obj), main_lua_state);
         }
-        void loadGame_DEBUG(std::string gamePath);
+        void loadGame_DEBUG(std::string gamePath, bool fixPath);
         void loadNewScene(const std::string& newScene);
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;

@@ -13,11 +13,7 @@ BOOL fixActivationPolicy = NO;
 
 char* getFileFromPicker() {
     if (!fixActivationPolicy) {
-        [NSApplication sharedApplication];
-        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
-        [NSApp finishLaunching];
-        [NSApp activateIgnoringOtherApps:YES];
-        fixActivationPolicy = YES;
+        fixActivationPolicyFunc();
     }
     NSOpenPanel *filePicker = [NSOpenPanel openPanel];
     filePicker.canChooseFiles = YES;
@@ -25,7 +21,6 @@ char* getFileFromPicker() {
     filePicker.allowsMultipleSelection = NO;
     filePicker.title = @"Pick a project";
     [filePicker makeKeyAndOrderFront:nil];
-    //filePicker.allowedContentTypes = allowedTypes;
     NSInteger result = [filePicker runModal];
     if (result == NSModalResponseOK) {
         NSString *fileUrlStr = [[[filePicker URLs] firstObject] path];
@@ -34,6 +29,16 @@ char* getFileFromPicker() {
         return nullptr;
     }
 };
+
+void fixActivationPolicyFunc() {
+    if (!fixActivationPolicy) {
+        [NSApplication sharedApplication];
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+        [NSApp finishLaunching];
+        [NSApp activateIgnoringOtherApps:YES];
+        fixActivationPolicy = YES;
+    }
+}
 
 /**
   * Simple testing function to check if it links right...
