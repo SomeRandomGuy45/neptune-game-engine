@@ -102,11 +102,9 @@ namespace neptune {
         #endif
         if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
             game_log("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
-            exit(1);
         }
         if (TTF_Init() != 0) {
             game_log("Couldn't start TTF! Error:" + std::string(TTF_GetError()), neptune::CRITICAL);
-            exit(1);
         }
         std::string execPath = getExecutablePath();
         std::string execDir = std::filesystem::path(execPath).parent_path().string();
@@ -120,7 +118,7 @@ namespace neptune {
             }
         }
         if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
-            game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::FAULT);
+            game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::CRITICAL);
         }
         Mix_AllocateChannels(32);
         //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
