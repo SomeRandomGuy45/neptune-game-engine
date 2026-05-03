@@ -44,11 +44,11 @@ namespace neptune {
         }
     }
 
-    void* Linker_Service::loadLib(const std::string& libName) {
+    void* LinkerService::loadLib(const std::string& libName) {
         return LIB_LOAD(libName.c_str());
     }
 
-    int Linker_Service::removeLib(void *lib)
+    int LinkerService::removeLib(void *lib)
     {
         return LIB_UNLOAD(lib);
     }
@@ -286,8 +286,8 @@ namespace neptune {
             "getG", &Color::getG, "setG", &Color::setG,
             "getB", &Color::getB, "setB", &Color::setB,
             "getA", &Color::getA, "setA", &Color::setA,
-            "setFromTable", &Color::setFromTable
-        );        
+            "setFromTable", &Color::setFromTable, "dumpVal", &Color::toSDL
+        ); 
         main_lua_state.new_usertype<neptune::Vector2>("Vector2",
             sol::constructors<Vector2(float, float)>(),
             "getX", &Vector2::getX, "setX", &Vector2::setX,
@@ -352,7 +352,15 @@ namespace neptune {
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Box>("Box",
-            sol::constructors<neptune::Box(int, int, int, int, SDL_Color)>(),
+                sol::meta_function::construct,
+                [this](float x, float y, float w, float h, neptune::Color c) {
+                    std::cout << "called\n";
+                    auto newBox = std::make_unique<neptune::Box>(x, y, w, h, c.toSDL());
+                    newBox->setName("boxTest");
+                    addObject(std::move(newBox));
+                    std::cout << "done\n";
+                    return nullptr;
+                },
             "getX", &Box::getX,
             "getY", &Box::getY,
             "setColor", [](neptune::Box& self, neptune::Color color) {
@@ -413,6 +421,11 @@ namespace neptune {
             },
             sol::base_classes, sol::bases<neptune::Object>()
         );
+        main_lua_state.new_usertype<PlatformService>("PlatformService",
+            "getExecutableDir", &PlatformService::getExecutableDir,
+            "getFileFromPicker", &PlatformService::getFromFilePicker,
+            "popUpWindow", &PlatformService::popUp
+        );
         main_lua_state.new_usertype<InputService>("InputService",
             "getKeyDown", &InputService::getKeyDown,
             "bindKeybind", &InputService::bindKeybind
@@ -421,6 +434,7 @@ namespace neptune {
             "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
                 auto objVariant = ws.getDrawObject(name);
                 if (objVariant) {
+                    std::cout << "doing\n";
                     return std::visit([this](auto& obj) {
                         return sol::make_object(main_lua_state, obj.get());
                     }, *objVariant);
@@ -455,6 +469,9 @@ namespace neptune {
             }),
             "InputService", sol::property([](Game& g) -> InputService& {
                 return g.inputService;
+            }),
+            "PlatformService", sol::property([](Game& g) -> PlatformService& {
+                return g.platformService;
             })
         );
         main_lua_state["game"] = this;
@@ -521,17 +538,25 @@ namespace neptune {
                 std::filesystem::create_directories(fullOutputPath);
                 continue;
             }
-            std::vector<char> contents(fileStat.size);
-            if ((file = zip_fopen_index(za, i, ZIP_FL_UNCHANGED)) == NULL) {
-                zip_error_init_with_code(&error, err);
-                game_log("Cannot get file Reason: " + std::string(zip_error_strerror(&error)), neptune::FAULT);
+            const zip_uint64_t expectedSize = fileStat.size;
+            std::vector<char> contents(expectedSize);
+
+            file = zip_fopen_index(za, i, 0);
+            if (!file) {
+                game_log("Cannot open file: " + std::string(fileStat.name), neptune::FAULT);
                 return;
             }
-            zip_fread(file, contents.data(), fileStat.size);
-            if (!std::ofstream(folderPath + std::string(fileStat.name)).write(contents.data(), fileStat.size)) {
-                game_log("Cannot write file! with path: " + std::string(fileStat.name), neptune::FAULT);
+
+            zip_int64_t bytesRead = zip_fread(file, contents.data(), expectedSize);
+            zip_fclose(file);
+
+            if (bytesRead < 0 || static_cast<zip_uint64_t>(bytesRead) != expectedSize) {
+                game_log("zip_fread failed: " + std::string(fileStat.name), neptune::FAULT);
                 return;
             }
+
+            std::ofstream out(fullOutputPath, std::ios::binary);
+            out.write(contents.data(), bytesRead);
         }
         zip_close(za);
         if (!isVaildGame(folderPath + folderName + "/")) {

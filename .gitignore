@@ -11,3 +11,6 @@ build
 *.DS_STORE
 *.o
 *.project
+vcpkg.json
+vcpkg-configuration.json
+CMakePresets.json

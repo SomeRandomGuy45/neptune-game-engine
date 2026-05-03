@@ -30,21 +30,21 @@ void initTestGame(neptune::Game& game) {
 
 int runApp(int argc, char **argv) {
     neptune::debugFunction_01();
-    neptune::fixActivationPolicyFunc();
-    const char* filePath = neptune::getFileFromPicker();
+    neptune::fixFileExplorerPolicy();
+    std::string filePath = neptune::getFileFromPicker();
     neptune::Game game;
-    if (filePath == nullptr) {
+    if (filePath.empty()) {
         neptune::game_log("No file stuff was selected, or user is on unsupported platform", neptune::WARNING);
         game.loadGame_DEBUG("exampleProject.project", true);
     } else {
-        neptune::game_log("File path: " + std::string(filePath));
+        neptune::game_log("File path: " + filePath);
         game.loadGame_DEBUG(filePath, false);
     }
+    neptune::popUpWindow("Test!", "Hi pop-up window test!");
     game.initLua();
     game.loadNewScene();
     //initTestGame(game);
     game.init();
-    delete filePath;
     return 0;
 }
 

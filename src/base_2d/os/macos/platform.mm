@@ -11,9 +11,9 @@ NSArray *allowedTypes = @[
 
 BOOL fixActivationPolicy = NO;
 
-char* getFileFromPicker() {
+std::string getFileFromPicker(const filePickerSettings& settings) {
     if (!fixActivationPolicy) {
-        fixActivationPolicyFunc();
+        fixFileExplorerPolicy();
     }
     NSOpenPanel *filePicker = [NSOpenPanel openPanel];
     filePicker.canChooseFiles = YES;
@@ -23,14 +23,20 @@ char* getFileFromPicker() {
     [filePicker makeKeyAndOrderFront:nil];
     NSInteger result = [filePicker runModal];
     if (result == NSModalResponseOK) {
-        NSString *fileUrlStr = [[[filePicker URLs] firstObject] path];
-        return strdup([fileUrlStr UTF8String]);
+        NSURL *url = [[filePicker URLs] firstObject];
+        NSString *filePath = [url path];
+
+        if (!filePath) {
+            return std::string();
+        }
+
+        return std::string([filePath UTF8String] ?: "");
     } else {
-        return nullptr;
+        return std::string();
     }
 };
 
-void fixActivationPolicyFunc() {
+void fixFileExplorerPolicy() {
     if (!fixActivationPolicy) {
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -46,6 +52,12 @@ void fixActivationPolicyFunc() {
  */
 void debugFunction_01() {
     NSLog(@"Hello world!");
+}
+
+int popUpWindow(const char* title, const char* message) {
+    // todo
+    NSLog(@"%s: %s", title, message);
+    return 0;
 }
 
 }

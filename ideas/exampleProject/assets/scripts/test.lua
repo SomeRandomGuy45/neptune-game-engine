@@ -10,10 +10,21 @@ like EventListener, sprite creation, keybinds, and many more..
 local M = {}
 
 local audio = game.Workspace:getObject("audio")
-local box = game.Workspace:getDrawObject("superCoolSprite")
+local color = Color.new(255, 255, 0, 255)
+local box = nil
 local currentPos = Vector2.new(0, 0)
 function M.init()
     print("Hi!")
+    print("added new")
+    print("doing test!")
+    Box.new(0, 0, 100, 100, color)
+    box = game.Workspace:getDrawObject("boxTest")
+    print("boom")
+    local result = game.PlatformService:popUpWindow("Hello!", "This is a pop-up window test!")
+    print("Pop-up result: " .. tostring(result))
+    local fileChoosen = game.PlatformService:getFileFromPicker()
+    print("File chosen: " .. fileChoosen)
+    print(game.PlatformService:getExecutableDir())
     if (not audio) then
         print("Audio object not found!")
         return

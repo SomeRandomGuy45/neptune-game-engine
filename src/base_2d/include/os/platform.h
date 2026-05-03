@@ -1,10 +1,14 @@
 #pragma once
 
+#include <string>
+
 namespace neptune {
 
-char* getFileFromPicker();
+std::string getFileFromPicker();
 
-void fixActivationPolicyFunc();
+int popUpWindow(const char* title, const char* message);
+
+void fixFileExplorerPolicy();
 
 void debugFunction_01();
 

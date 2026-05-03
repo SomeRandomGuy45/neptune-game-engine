@@ -220,9 +220,7 @@ namespace neptune {
         */
         std::unordered_map<std::string, pugi::xml_document> sceneData;
     };
-
-
-    class Linker_Service {
+    class LinkerService {
     public:
         void loadNewLink(const std::string& libName);
         void addFunctionFromLink(const std::string& libName, const std::string& funcName);
@@ -245,6 +243,19 @@ namespace neptune {
     private:
         std::map<int, sol::protected_function> keybinds;
         int currentKeyDown = -1;
+    };
+
+    class PlatformService {
+    public:
+        std::string getExecutableDir() {
+            return std::filesystem::path(getExecutablePath()).parent_path().string();
+        };
+        std::string getFromFilePicker() {
+            return getFileFromPicker();
+        }
+        int popUp(const char* title, const char* message) {
+            return popUpWindow(title, message);
+        }
     };
 
     class Workspace {
@@ -297,6 +308,8 @@ namespace neptune {
         std::vector<std::string> luaScripts;
         Camera camera;
         SceneLoadingService sceneLoadingService;
+        PlatformService platformService;
+        LinkerService linkerService;
     };
 
 } // namespace neptune
