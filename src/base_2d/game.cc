@@ -12,6 +12,8 @@ namespace neptune {
         NONE = -1
     };
 
+    std::shared_mutex lua_mutex;
+
     std::unordered_map<std::string, objectTypes> strToObjectTypes = {
         {"sprite", SPRITE},
         {"box", BOX},
@@ -102,6 +104,29 @@ namespace neptune {
             game_log("SDL could not initialize! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
             exit(1);
         }
+        if (TTF_Init() != 0) {
+            game_log("Couldn't start TTF! Error:" + std::string(TTF_GetError()), neptune::CRITICAL);
+            exit(1);
+        }
+        std::string execPath = getExecutablePath();
+        std::string execDir = std::filesystem::path(execPath).parent_path().string();
+        game_log("Looking for fonts in: " + execDir + "/assets/fonts");
+        for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/fonts")) {
+        if (dir.is_regular_file() && dir.path().extension() == ".ttf") {
+                std::string fontName = dir.path().filename().string();
+                fontName = fontName.substr(0, fontName.length() - 4);
+                game_log("Loading file: " + fontName + " Dir: " + dir.path().string());
+                fonts.insert({fontName, TTF_OpenFont(dir.path().string().c_str(), 24)});
+            }
+        }
+        if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
+            game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::FAULT);
+        }
+        Mix_AllocateChannels(32);
+        //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
+        for (const auto& [name, font] : fonts) {
+            TTF_SetFontHinting(font, TTF_HINTING_LIGHT_SUBPIXEL);
+        }
         #ifdef SDL_HINT_IME_SHOW_UI
             SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
         #endif
@@ -150,12 +175,8 @@ namespace neptune {
         ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
         ImGui_ImplSDLRenderer2_Init(renderer);
 
-
-        std::string execPath = getExecutablePath();
-        std::string execDir = std::filesystem::path(execPath).parent_path().string();
         bool quit = false;
-        std::shared_mutex lua_mutex;
-        game_log("Loading scripts");
+        game_log("Loading scripts from 1st scene");
         loadLua(lua_mutex);
         while (!quit) {
             SDL_Event e;
@@ -309,7 +330,19 @@ namespace neptune {
             "Stop", &Audio::Stop
         );
         main_lua_state.new_usertype<neptune::Text>("Text",
-            sol::constructors<neptune::Text(float, float, float, float, std::string)>(),
+            //sol::constructors<neptune::Text(float, float, float, float, std::string)>(),
+            sol::meta_function::construct,
+                [this](float x, float y, float w, float h, std::string text) {
+                    std::cout << "called text\n";
+                    auto newText = std::make_unique<neptune::Text>(x, y, w, h, text);
+                    std::string name = "newText" + std::to_string(objCreatedCount);
+                    newText->setName(name);
+                    objCreatedCount += 1;
+                    addObject(std::move(newText));
+                    auto* variant = workspace.getDrawObject(name);
+                    auto& obj = std::get<std::unique_ptr<neptune::Text>>(*variant);
+                    return sol::make_object(main_lua_state, obj.get());
+                },
             "getX", &Text::getX,
             "getY", &Text::getY,
             "setPosition", [](neptune::Text& self, sol::object maybe_vec) {
@@ -332,7 +365,19 @@ namespace neptune {
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
-            sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),
+            //sol::constructors<neptune::Sprite(std::string, int, int, int, int)>(),
+            sol::meta_function::construct,
+                [this](std::string filePath, float x, float y, float w, float h) {
+                    std::cout << "called sprite\n";
+                    auto newSprite = std::make_unique<neptune::Sprite>(filePath, x, y, w, h);
+                    std::string name = "newSprite" + std::to_string(objCreatedCount);
+                    newSprite->setName(name);
+                    objCreatedCount += 1;
+                    addObject(std::move(newSprite));
+                    auto* variant = workspace.getDrawObject(name);
+                    auto& obj = std::get<std::unique_ptr<neptune::Sprite>>(*variant);
+                    return sol::make_object(main_lua_state, obj.get());
+                },
             "getX", &Sprite::getX,
             "getY", &Sprite::getY,
             "setColor", [](neptune::Sprite& self, neptune::Color color) {
@@ -352,14 +397,17 @@ namespace neptune {
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Box>("Box",
-                sol::meta_function::construct,
+            sol::meta_function::construct,
                 [this](float x, float y, float w, float h, neptune::Color c) {
                     std::cout << "called\n";
                     auto newBox = std::make_unique<neptune::Box>(x, y, w, h, c.toSDL());
-                    newBox->setName("boxTest");
+                    std::string name = "newBox" + std::to_string(objCreatedCount);
+                    newBox->setName(name);
+                    objCreatedCount += 1;
                     addObject(std::move(newBox));
-                    std::cout << "done\n";
-                    return nullptr;
+                    auto* variant = workspace.getDrawObject(name);
+                    auto& obj = std::get<std::unique_ptr<neptune::Box>>(*variant);
+                    return sol::make_object(main_lua_state, obj.get());
                 },
             "getX", &Box::getX,
             "getY", &Box::getY,
@@ -381,7 +429,19 @@ namespace neptune {
         );
 
         main_lua_state.new_usertype<neptune::Triangle>("Triangle",
-            sol::constructors<neptune::Triangle(int, int, int, int, SDL_Color)>(),
+            //sol::constructors<neptune::Triangle(int, int, int, int, SDL_Color)>(),
+            sol::meta_function::construct,
+                [this](float x, float y, float w, float h, neptune::Color c) {
+                    std::cout << "called triangle\n";
+                    auto newTriangle = std::make_unique<neptune::Triangle>(x, y, w, h, c.toSDL());
+                    std::string name = "newTriangle" + std::to_string(objCreatedCount);
+                    newTriangle->setName(name);
+                    objCreatedCount += 1;
+                    addObject(std::move(newTriangle));
+                    auto* variant = workspace.getDrawObject(name);
+                    auto& obj = std::get<std::unique_ptr<neptune::Triangle>>(*variant);
+                    return sol::make_object(main_lua_state, obj.get());
+                },
             "getX", &Triangle::getX,
             "getY", &Triangle::getY,
             "setColor", [](neptune::Triangle& self, neptune::Color color) {
@@ -402,7 +462,19 @@ namespace neptune {
         );
 
         main_lua_state.new_usertype<neptune::Circle>("Circle",
-            sol::constructors<neptune::Circle(int, int, int, SDL_Color)>(),
+            //sol::constructors<neptune::Circle(int, int, int, SDL_Color)>(),
+            sol::meta_function::construct,
+                [this](float x, float y, float r, neptune::Color c) {
+                    std::cout << "called circle\n";
+                    auto newCircle = std::make_unique<neptune::Circle>(x, y, r, c.toSDL());
+                    std::string name = "newCircle" + std::to_string(objCreatedCount);
+                    newCircle->setName(name);
+                    objCreatedCount += 1;
+                    addObject(std::move(newCircle));
+                    auto* variant = workspace.getDrawObject(name);
+                    auto& obj = std::get<std::unique_ptr<neptune::Circle>>(*variant);
+                    return sol::make_object(main_lua_state, obj.get());
+                },
             "getX", &Circle::getX,
             "getY", &Circle::getY,
             "setColor", [](neptune::Circle& self, neptune::Color color) {
@@ -434,7 +506,6 @@ namespace neptune {
             "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
                 auto objVariant = ws.getDrawObject(name);
                 if (objVariant) {
-                    std::cout << "doing\n";
                     return std::visit([this](auto& obj) {
                         return sol::make_object(main_lua_state, obj.get());
                     }, *objVariant);
@@ -472,7 +543,12 @@ namespace neptune {
             }),
             "PlatformService", sol::property([](Game& g) -> PlatformService& {
                 return g.platformService;
-            })
+            }),
+            "loadNewScene", [this](Game& game, std::string newScene) {
+                loadNewScene(newScene);
+                game_log("Loading new scripts");
+                loadLua(lua_mutex);
+            }
         );
         main_lua_state["game"] = this;
         game_log("Made Lua engine");
@@ -483,10 +559,24 @@ namespace neptune {
             return;
         }
         for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/" + outputDirType)) {
-            if (!dir.is_regular_file()) continue;
+            if (!dir.is_regular_file() && !dir.is_directory()) continue;
             std::string path = dir.path().string();
-            game_log("Moving file from: " + path + " to " + execDir + "/assets/" + outputDirType + "/" + dir.path().filename().string());
-            std::filesystem::rename(path, execDir + "/assets/" + outputDirType + "/" + dir.path().filename().string());
+            auto target = execDir + "/assets/" + outputDirType + "/" + dir.path().filename().string();
+            if (std::filesystem::exists(target)) {
+                std::filesystem::remove_all(target);
+            }
+            game_log("Moving file from: " + path + " to " + target);
+            try {
+                std::filesystem::rename(path, target);
+            } catch (const std::filesystem::filesystem_error& e) {
+                game_log(std::string("Rename failed, trying copy: ") + e.what());
+
+                std::filesystem::copy(path, target,
+                    std::filesystem::copy_options::recursive |
+                    std::filesystem::copy_options::overwrite_existing);
+
+                std::filesystem::remove_all(path);
+            }
         }
     }
     // TODO... remove this function and make a better way to load games
@@ -591,6 +681,7 @@ namespace neptune {
             game_log("Got no scene data or its not a array! Quitting!", neptune::CRITICAL);
             return;
         }
+        objCreatedCount = 0;
         moveFile("sprite_data", folderName, folderPath, execDir);
         moveFile("scripts", folderName, folderPath, execDir);
         moveFile("fonts", folderName, folderPath, execDir);
@@ -701,6 +792,10 @@ namespace neptune {
             game_log("Scene name is empty! Falling back to default scene", neptune::WARNING);
             workingSceneName = sceneLoadingService.defaultScene;
         }
+        updateFuncs.clear();
+        luaScripts.clear();
+        workspace.objects.clear();
+        workspace.objects_base.clear();
         pugi::xml_document& doc = sceneLoadingService.getScene(workingSceneName);
         for (pugi::xml_node node : doc.child("game").children()) {
             std::string nodeName = node.name();

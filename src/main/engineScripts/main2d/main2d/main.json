@@ -1,0 +1,6 @@
+{
+    "projectName" : "Neptune Game Engine",
+    "gameName" : "Neptune Game Engine",
+    "defaultScene" : "loadingScene",
+    "scenes" : ["loadingScene", "testScene"]
+}

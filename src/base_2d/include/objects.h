@@ -24,9 +24,6 @@ enum NEPTUNE_MUSIC_STATE {
     PLAYING, STOPPED
 };
 
-inline bool NEPTUNE_MUSIC_INIT = false;
-inline bool NEPTUNE_FONT_INIT = false;
-
 inline std::unordered_map<std::string, TTF_Font*> fonts;
 
 class Color {
@@ -117,13 +114,6 @@ private:
 class Audio : public BaseObject {
 public:
     Audio(std::string _path) {
-        if (!NEPTUNE_MUSIC_INIT) {
-            if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
-                game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::FAULT);
-            }
-            Mix_AllocateChannels(32);
-            NEPTUNE_MUSIC_INIT = true;
-        }
         std::string execPath = getExecutablePath();
         std::string execDir = std::filesystem::path(execPath).parent_path().string();
         std::string newPath = execDir + "/assets/audio/" + _path;
@@ -259,35 +249,8 @@ private:
 
 class Text : public Object {
 public:
-    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 0}, SDL_Color _background_color = SDL_Color{.r = 0, .g = 0, .b = 0, .a = 0}) : 
+    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 255}, SDL_Color _background_color = SDL_Color{.r = 0, .g = 0, .b = 0, .a = 0}) : 
         x(_x), y(_y), w(_w), h(_h), text_color(_text_color), background_color(_background_color), text(_text), fontName(_fontName) {
-            if (!NEPTUNE_FONT_INIT) {
-                NEPTUNE_FONT_INIT = true;
-                if (TTF_Init() != 0) {
-                    game_log("Couldn't start TTF! Error:" + std::string(TTF_GetError()), neptune::CRITICAL);
-                    exit(1);
-                }
-                /*
-                * later on force a use of a assets folder
-                * something like assets/fonts, would work
-                * done!
-                */
-                std::string execPath = getExecutablePath();
-                std::string execDir = std::filesystem::path(execPath).parent_path().string();
-                game_log("Looking for fonts in: " + execDir + "/assets/fonts");
-                for (auto& dir : std::filesystem::recursive_directory_iterator(execDir + "/assets/fonts")) {
-                    if (dir.is_regular_file() && dir.path().extension() == ".ttf") {
-                        std::string fontName = dir.path().filename().string();
-                        fontName = fontName.substr(0, fontName.length() - 4);
-                        game_log("Loading file: " + fontName + " Dir: " + dir.path().string());
-                        fonts.insert({fontName, TTF_OpenFont(dir.path().string().c_str(), 24)});
-                    }
-                }
-                //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
-                for (const auto& [name, font] : fonts) {
-                    TTF_SetFontHinting(font, TTF_HINTING_LIGHT_SUBPIXEL);
-                }
-            }
             name = "Text";
         };
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;

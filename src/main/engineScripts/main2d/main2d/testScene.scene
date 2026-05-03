@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<game>
+    <gameSettings>
+        <setting name="sceneName" value="testScene"></setting>
+    </gameSettings>
+    <script name="testScript" path="testScene/testScript.lua"></script>
+</game>

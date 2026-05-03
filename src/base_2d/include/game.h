@@ -300,6 +300,7 @@ namespace neptune {
         
         bool showDemoWin = (USE_DEBUG_DEMO_WIN && GLOBAL_DEBUG);
         bool isDebug = GLOBAL_DEBUG;
+        int objCreatedCount = 0;
         
         SDL_Window* window;
         SDL_Renderer* renderer;
