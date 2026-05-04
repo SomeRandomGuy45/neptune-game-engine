@@ -255,7 +255,7 @@ namespace neptune {
     
     void Game::initLua()
     {
-        main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table);
+        main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::package);
         main_lua_state.set_function("halt", [](float haltTime){
             std::this_thread::sleep_for(float_milliseconds(haltTime * 1000));
         });
@@ -272,6 +272,9 @@ namespace neptune {
             enumKeycodeTypeTable[key] = value;
         }
         main_lua_state["Enums"]["Keycodes"] = enumKeycodeTypeTable;
+        std::string currentPath = main_lua_state["package"]["path"];
+        std::string newPath = currentPath + ";"+ std::filesystem::path(getExecutablePath()).parent_path().string() + "/assets/scripts/?.lua";
+        main_lua_state["package"]["path"] = newPath;
         main_lua_state.new_usertype<neptune::Object>("Object",
             "setName", [this](neptune::Object& obj, const std::string& newName) {
                 auto range = workspace.objects.equal_range(obj.name);
