@@ -1,5 +1,6 @@
 local M = {}
 
+local testModule = require("testScene.testModule")
 local backgroundColor = Color.new(140, 52, 235, 255)
 
 function M.init()
@@ -7,7 +8,6 @@ function M.init()
     local box = Box.new(0, 0, 10000, 10000, backgroundColor)
     print(box ~= nil)
     print(package.path)
-    local testModule = require("testScene.testModule")
     print("okay 1")
     print(testModule.functionTest())
     print("okay 2")
