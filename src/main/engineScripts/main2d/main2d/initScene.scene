@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<game>
+    <gameSettings>
+        <setting name="sceneName" value="initScene"></setting>
+    </gameSettings>
+    <script name="mainInitScript" path="init/mainInitScript.lua"></script>
+    <script name="buttonHandlerScript" path="init/buttonHandlerScript.lua"></script>
+    <listener name="buttonFinishEvent"></listener>
+</game>

@@ -264,6 +264,8 @@ public:
     void changeText(std::string newText);
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
+    std::string returnFontName() { return fontName; }
+
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
 private:
     SDL_Texture* texture = nullptr;

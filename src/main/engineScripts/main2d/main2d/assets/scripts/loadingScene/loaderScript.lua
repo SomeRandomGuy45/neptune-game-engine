@@ -12,7 +12,7 @@ function M.init()
     text:setBackgroundColor(backgroundColor)
     print(text ~= nil)
     halt(2)
-    game:loadNewScene("testScene")
+    game:loadNewScene("initScene")
 end
 
 function M.update()

@@ -363,6 +363,9 @@ namespace neptune {
             "setBackgroundColor", [](neptune::Text& self, neptune::Color color) {
                 self.setBackgroundColor(color.toSDL());
             },
+            "returnFontName", [](neptune::Text& self) {
+                return self.returnFontName();
+            },
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
@@ -549,6 +552,16 @@ namespace neptune {
                 loadNewScene(newScene);
                 game_log("Loading new scripts");
                 loadLua(lua_mutex);
+            },
+            "getTextSize", [this](Game& game, std::string fontName, std::string textToCalc) {
+                int w, h;
+                sol::table tempTable = main_lua_state.create_table();
+                if (TTF_SizeText(fonts[fontName], textToCalc.c_str(), &w, &h) == 0) {
+                    tempTable["w"] = w;
+                    tempTable["h"] = h;
+                    return tempTable;
+                }
+                return tempTable;
             }
         );
         main_lua_state["game"] = this;
@@ -681,6 +694,18 @@ namespace neptune {
             
             game_log("Got no scene data or its not a array! Quitting!", neptune::CRITICAL);
             return;
+        }
+        if (sceneLoadingService.configJson.contains("fullscreen") && sceneLoadingService.configJson["fullscreen"].is_boolean()) {
+            bool isFullscreen = sceneLoadingService.configJson["fullscreen"];
+            if (isFullscreen) {
+                flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+            }
+        }
+        if (sceneLoadingService.configJson.contains("resizable") && sceneLoadingService.configJson["resizable"].is_boolean()) {
+            bool isResizable = sceneLoadingService.configJson["resizable"];
+            if (isResizable) {
+                flags |= SDL_WINDOW_RESIZABLE;
+            }
         }
         objCreatedCount = 0;
         moveFile("sprite_data", folderName, folderPath, execDir);

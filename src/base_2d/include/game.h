@@ -26,18 +26,6 @@
 #include "struct.h"
 #include "os/platform.h"
 
-#ifdef NEPTUNE_FULLSCREEN
-#define SCREEN_VALUE SDL_WINDOW_FULLSCREEN
-#else
-#define SCREEN_VALUE 0
-#endif
-
-#ifdef NEPTUNE_RESIZEABLE
-#define SCREEN_VALUE_2 SDL_WINDOW_RESIZABLE
-#else
-#define SCREEN_VALUE_2 0
-#endif
-
 #ifdef NEPTUNE_DEBUG_GLOBAL
 #define GLOBAL_DEBUG true
 #else
@@ -292,8 +280,8 @@ namespace neptune {
         void loadNewScene(const std::string& newScene = "");
         int SCREEN_WIDTH = 640;
         int SCREEN_HEIGHT = 480;
-        // SDL_WINDOW_FULLSCREEN and SDL_WINDOW_RESIZABLE are the only ones we can use
-        Uint32 flags = SCREEN_VALUE | SCREEN_VALUE_2;
+        // SDL_WINDOW_FULLSCREEN_DESKTOP and SDL_WINDOW_RESIZABLE are the only ones we can use
+        Uint32 flags = 0;
     private:
         void render(ImGuiIO& io);
         void moveFile(const std::string& outputDirType, const std::string& folderName, const std::string& folderPath, const std::string& execDir);
