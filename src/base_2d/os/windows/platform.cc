@@ -21,7 +21,9 @@ namespace neptune {
 
     std::string WideToUtf8(const wchar_t* wstr)
     {
-        if (!wstr) return {};
+        if (!wstr) return std::string();
+
+        if (wstr[0] == L'\0') return std::string();
 
         int size = WideCharToMultiByte(
             CP_UTF8,
@@ -33,6 +35,10 @@ namespace neptune {
             nullptr,
             nullptr
         );
+
+        if (size <= 0) {
+            return std::string();
+        }
 
         std::string result(size - 1, 0);
 
@@ -61,31 +67,31 @@ namespace neptune {
         HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void **>(&pFileOpen));
         if (FAILED(hr)) {
             std::cerr << "Failed to create File Open Dialog instance. Error code: " << std::hex << hr << std::endl;
-            return nullptr;
+            return {};
         }
         hr = pFileOpen->SetFileTypes(ARRAYSIZE(fileTypes), fileTypes);
         if (FAILED(hr)) {
             std::cerr << "Failed to set file types for File Open Dialog. Error code: " << std::hex << hr << std::endl;
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
         hr = pFileOpen->Show(NULL);
         if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))
         {
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
         else if (FAILED(hr)) {
             std::cerr << "Failed to show File Open Dialog. Error code: " << std::hex << hr << std::endl;
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
         IShellItemArray* pItemArray;
         hr = pFileOpen->GetResults(&pItemArray);
         if (FAILED(hr)) {
             std::cerr << "Failed to get results from File Open Dialog. Error code: " << std::hex << hr << std::endl;
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
         DWORD numItems;
         hr = pItemArray->GetCount(&numItems);
@@ -93,7 +99,7 @@ namespace neptune {
             std::cerr << "Failed to get item count from File Open Dialog results. Error code: " << std::hex << hr << std::endl;
             pItemArray->Release();
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
         IShellItem* pItem;
         hr = pItemArray->GetItemAt(0, &pItem);
@@ -101,7 +107,7 @@ namespace neptune {
             std::cerr << "Failed to get item from File Open Dialog results. Error code: " << std::hex << hr << std::endl;
             pItemArray->Release();
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
         PWSTR pszFilePath;
         hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
@@ -110,9 +116,14 @@ namespace neptune {
             pItem->Release();
             pItemArray->Release();
             pFileOpen->Release();
-            return nullptr;
+            return {};
         }
-        std::string filePath = WideToUtf8(pszFilePath);
+        std::string filePath;
+        try {
+            filePath = WideToUtf8(pszFilePath);
+        } catch (...) {
+            std::cout << "Something happened!\n";
+        }
         CoTaskMemFree(pszFilePath);
         return filePath;
     }

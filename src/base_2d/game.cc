@@ -173,7 +173,6 @@ namespace neptune {
         ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
         ImGui_ImplSDLRenderer2_Init(renderer);
 
-        bool quit = false;
         game_log("Loading scripts from 1st scene");
         loadLua(lua_mutex);
         while (!quit) {
@@ -214,7 +213,11 @@ namespace neptune {
             }
             for (const auto& func : updateFuncs) {
                 try {
-                    func();
+                    sol::protected_function_result result = func();
+                    if (!result.valid()) {
+                        sol::error err = result;
+                        luaError(std::string(err.what()));
+                    }
                 } catch (const sol::error& e) {
                     game_log("Caught error: " + std::string(e.what()), neptune::FAULT);
                 } catch (...) {
@@ -252,10 +255,56 @@ namespace neptune {
         game_log("SDL window and renderer is gone... Quitting now...");
         SDL_Quit();
     }
-    
+
+    // Really neat thing!
+    // https://github.com/ThePhD/sol2/blob/develop/examples/source/docs/my_panic.cpp
+    void Game::luaError(sol::optional<std::string> maybe_msg) {
+        std::string mainMessage = "Lua Engine ran into a fatal error!";
+        if (maybe_msg) {
+            const std::string& msg = maybe_msg.value();
+            mainMessage += "\nReturned error message from Lua: " + msg + "\n";
+        }
+        mainMessage += "Exiting now!";
+        game_log(mainMessage, neptune::CRITICAL);
+    }
+    std::string doMsg(sol::variadic_args args) {
+        std::string message;
+        for (auto msg : args) {
+            sol::type t = msg.get_type();
+            switch (t) {
+                case sol::type::string:
+                    message += msg.as<std::string>();
+                    break;
+                case sol::type::number:
+                    message += std::to_string(msg.as<double>());
+                    break;
+                case sol::type::boolean:
+                    message += msg.as<bool>() ? "true" : "false";
+                    break;
+                case sol::type::nil:
+                    message += "nil";
+                    break;
+                default:
+                    message += "<userdata>";
+                    break;
+            }
+            message += " ";
+        }
+        return message;
+    }
     void Game::initLua()
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::package);
+        main_lua_state.set_panic(sol::c_call<decltype(&luaError),luaError>);
+        main_lua_state["print"] = [this](sol::variadic_args args){
+            game_log(doMsg(args));
+        };
+        main_lua_state["warn"] = [this](sol::variadic_args args){
+            game_log(doMsg(args), neptune::WARNING);
+        };
+        main_lua_state["fault"] = [this](sol::variadic_args args){
+            game_log(doMsg(args), neptune::FAULT);
+        };
         main_lua_state.set_function("halt", [](float haltTime){
             std::this_thread::sleep_for(float_milliseconds(haltTime * 1000));
         });
@@ -276,7 +325,7 @@ namespace neptune {
         std::string newPath = currentPath + ";"+ std::filesystem::path(getExecutablePath()).parent_path().string() + "/assets/scripts/?.lua";
         main_lua_state["package"]["path"] = newPath;
         main_lua_state.new_usertype<neptune::Object>("Object",
-            "setName", [this](neptune::Object& obj, const std::string& newName) {
+            "setName", sol::as_function([this](neptune::Object& obj, const std::string& newName) {
                 auto range = workspace.objects.equal_range(obj.name);
                 for (auto it = range.first; it != range.second; ++it) {
                     auto objPtr = std::move(it->second);
@@ -285,13 +334,13 @@ namespace neptune {
                     break;
                 }
                 obj.name = newName; 
-            },
+            }),
             "setZIndex" , &Object::setZIndex,
             "getZIndex", &Object::getZIndex
         );
         
         main_lua_state.new_usertype<neptune::BaseObject>("BaseObject", 
-            "setName", [this](neptune::BaseObject& obj, const std::string& newName) {
+            "setName", sol::as_function([this](neptune::BaseObject& obj, const std::string& newName) {
                 auto range = workspace.objects_base.equal_range(obj.name);
                 for (auto it = range.first; it != range.second; ++it) {
                     auto objPtr = std::move(it->second);
@@ -300,7 +349,7 @@ namespace neptune {
                     break;
                 }
                 obj.name = newName;
-            }
+            })
         );        
         main_lua_state.new_usertype<neptune::Color>("Color",
             sol::constructors<Color(Uint8, Uint8, Uint8, Uint8)>(),
@@ -318,12 +367,12 @@ namespace neptune {
         );
         main_lua_state.new_usertype<neptune::EventListener>("EventListener",
             sol::constructors<EventListener()>(),
-            "addListener", [](neptune::EventListener& event, sol::protected_function func) {
+            "addListener", sol::as_function([](neptune::EventListener& event, sol::protected_function func) {
                 event.AddListener(func);
-            },
-            "Fire", [](neptune::EventListener& event, sol::variadic_args args) {
+            }),
+            "Fire", sol::as_function([](neptune::EventListener& event, sol::variadic_args args) {
                 event.Fire(args);
-            }
+            })
         );
         main_lua_state.new_usertype<neptune::Audio>("Audio",
             sol::constructors<Audio(std::string)>(),
@@ -346,26 +395,26 @@ namespace neptune {
                 },
             "getX", &Text::getX,
             "getY", &Text::getY,
-            "setPosition", [](neptune::Text& self, sol::object maybe_vec) {
+            "setPosition", sol::as_function([](neptune::Text& self, sol::object maybe_vec) {
                 if (maybe_vec.is<neptune::Vector2>()) {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
                     game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
                 }
-            },
-            "changeText", [](neptune::Text& text, std::string newText){
+            }),
+            "changeText", sol::as_function([](neptune::Text& text, std::string newText){
                 text.changeText(newText);
-            },
-            "setTextColor", [](neptune::Text& self, neptune::Color color) {
+            }),
+            "setTextColor", sol::as_function([](neptune::Text& self, neptune::Color color) {
                 self.setTextColor(color.toSDL());
-            },
-            "setBackgroundColor", [](neptune::Text& self, neptune::Color color) {
+            }),
+            "setBackgroundColor", sol::as_function([](neptune::Text& self, neptune::Color color) {
                 self.setBackgroundColor(color.toSDL());
-            },
-            "returnFontName", [](neptune::Text& self) {
+            }),
+            "returnFontName", sol::as_function([](neptune::Text& self) {
                 return self.returnFontName();
-            },
+            }),
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
@@ -384,20 +433,20 @@ namespace neptune {
                 },
             "getX", &Sprite::getX,
             "getY", &Sprite::getY,
-            "setColor", [](neptune::Sprite& self, neptune::Color color) {
+            "setColor", sol::as_function([](neptune::Sprite& self, neptune::Color color) {
                 self.setColor(color.toSDL());
-            },
-            "setMouseCallBack", [](neptune::Sprite& self, sol::protected_function func) {
+            }),
+            "setMouseCallBack", sol::as_function([](neptune::Sprite& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
-            },
-            "setPosition", [](neptune::Sprite& self, sol::object maybe_vec) {
+            }),
+            "setPosition", sol::as_function([](neptune::Sprite& self, sol::object maybe_vec) {
                 if (maybe_vec.is<neptune::Vector2>()) {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
                     game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
                 }
-            },
+            }),
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Box>("Box",
@@ -415,20 +464,20 @@ namespace neptune {
                 },
             "getX", &Box::getX,
             "getY", &Box::getY,
-            "setColor", [](neptune::Box& self, neptune::Color color) {
+            "setColor", sol::as_function([](neptune::Box& self, neptune::Color color) {
                 self.setColor(color.toSDL());
-            },
-            "setMouseCallBack", [](neptune::Box& self, sol::protected_function func) {
+            }),
+            "setMouseCallBack", sol::as_function([](neptune::Box& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
-            },
-            "setPosition", [](neptune::Box& self, sol::object maybe_vec) {
+            }),
+            "setPosition", sol::as_function([](neptune::Box& self, sol::object maybe_vec) {
                 if (maybe_vec.is<neptune::Vector2>()) {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
                     game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
                 }
-            },
+            }),
             sol::base_classes, sol::bases<neptune::Object>()
         );
 
@@ -448,20 +497,20 @@ namespace neptune {
                 },
             "getX", &Triangle::getX,
             "getY", &Triangle::getY,
-            "setColor", [](neptune::Triangle& self, neptune::Color color) {
+            "setColor", sol::as_function([](neptune::Triangle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
-            },
-            "setMouseCallBack", [](neptune::Triangle& self, sol::protected_function func) {
+            }),
+            "setMouseCallBack", sol::as_function([](neptune::Triangle& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
-            },
-            "setPosition", [](neptune::Triangle& self, sol::object maybe_vec) {
+            }),
+            "setPosition", sol::as_function([](neptune::Triangle& self, sol::object maybe_vec) {
                 if (maybe_vec.is<neptune::Vector2>()) {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
                     game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
                 }
-            },
+            }),
             sol::base_classes, sol::bases<neptune::Object>()
         );
 
@@ -481,20 +530,20 @@ namespace neptune {
                 },
             "getX", &Circle::getX,
             "getY", &Circle::getY,
-            "setColor", [](neptune::Circle& self, neptune::Color color) {
+            "setColor", sol::as_function([](neptune::Circle& self, neptune::Color color) {
                 self.setColor(color.toSDL());
-            },
-            "setMouseCallBack", [](neptune::Circle& self, sol::protected_function func) {
+            }),
+            "setMouseCallBack", sol::as_function([](neptune::Circle& self, sol::protected_function func) {
                 self.SetMouseCallBack(func);
-            },
-            "setPosition", [](neptune::Circle& self, sol::object maybe_vec) {
+            }),
+            "setPosition", sol::as_function([](neptune::Circle& self, sol::object maybe_vec) {
                 if (maybe_vec.is<neptune::Vector2>()) {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
                     game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
                 }
-            },
+            }),
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<PlatformService>("PlatformService",
@@ -507,7 +556,7 @@ namespace neptune {
             "bindKeybind", &InputService::bindKeybind
         );
         main_lua_state.new_usertype<Workspace>("Workspace",
-            "getDrawObject", [this](Workspace& ws, const std::string& name) -> sol::object {
+            "getDrawObject", sol::as_function([this](Workspace& ws, const std::string& name) -> sol::object {
                 auto objVariant = ws.getDrawObject(name);
                 if (objVariant) {
                     return std::visit([this](auto& obj) {
@@ -515,8 +564,8 @@ namespace neptune {
                     }, *objVariant);
                 }
                 return sol::lua_nil;
-            },
-            "getObject", [this](Workspace& ws, const std::string& name) -> sol::object {
+            }),
+            "getObject", sol::as_function([this](Workspace& ws, const std::string& name) -> sol::object {
                 auto objVariant = ws.getObject(name);
                 if (objVariant) {
                     return std::visit([this](auto& obj) {
@@ -524,19 +573,19 @@ namespace neptune {
                     }, *objVariant);
                 }
                 return sol::lua_nil;
-            },
-            "moveCamera", [this](Workspace& ws, float dx, float dy) {
+            }),
+            "moveCamera", sol::as_function([this](Workspace& ws, float dx, float dy) {
                 camera.move(dx, dy);
-            },
-            "setCamera", [this](Workspace& ws, float dx, float dy) {
+            }),
+            "setCamera", sol::as_function([this](Workspace& ws, float dx, float dy) {
                 camera.setCamera(dx, dy);
-            },
-            "getCameraX", [this](Workspace& ws) {
+            }),
+            "getCameraX", sol::as_function([this](Workspace& ws) {
                 return camera.getX();
-            },
-            "getCameraY", [this](Workspace& ws) {
+            }),
+            "getCameraY", sol::as_function([this](Workspace& ws) {
                 return camera.getY();
-            }
+            })
         );
         main_lua_state.new_usertype<Game>("Game",
             "Workspace", sol::property([](Game& g) -> Workspace& {
@@ -548,12 +597,12 @@ namespace neptune {
             "PlatformService", sol::property([](Game& g) -> PlatformService& {
                 return g.platformService;
             }),
-            "loadNewScene", [this](Game& game, std::string newScene) {
+            "loadNewScene", sol::as_function([this](Game& game, std::string newScene) {
                 loadNewScene(newScene);
                 game_log("Loading new scripts");
                 loadLua(lua_mutex);
-            },
-            "getTextSize", [this](Game& game, std::string fontName, std::string textToCalc) {
+            }),
+            "getTextSize", sol::as_function([this](Game& game, std::string fontName, std::string textToCalc) {
                 int w, h;
                 sol::table tempTable = main_lua_state.create_table();
                 if (TTF_SizeText(fonts[fontName], textToCalc.c_str(), &w, &h) == 0) {
@@ -561,8 +610,11 @@ namespace neptune {
                     tempTable["h"] = h;
                     return tempTable;
                 }
+                game_log("Fallback for text!", neptune::DEBUG);
+                tempTable["w"] = 200;
+                tempTable["h"] = 200;
                 return tempTable;
-            }
+            })
         );
         main_lua_state["game"] = this;
         game_log("Made Lua engine");
@@ -746,10 +798,14 @@ namespace neptune {
                 game_log("init func is not valid or is empty", neptune::FAULT);
                 continue;
             }
-            std::thread([init_func, &lua_mutex]() {
+            std::thread([this, init_func, &lua_mutex]() {
                 try {
                     std::unique_lock<std::shared_mutex> lock(lua_mutex);
-                    init_func();
+                    sol::protected_function_result result = init_func();
+                    if (!result.valid()) {
+                        sol::error err = result;
+                        luaError(std::string(err.what()));
+                    }
                 } catch (const sol::error& e) {
                     game_log("Caught error: " + std::string(e.what()), neptune::FAULT);
                 } catch (...) {

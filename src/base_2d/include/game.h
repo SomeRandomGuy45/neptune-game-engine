@@ -285,9 +285,10 @@ namespace neptune {
     private:
         void render(ImGuiIO& io);
         void moveFile(const std::string& outputDirType, const std::string& folderName, const std::string& folderPath, const std::string& execDir);
-        
+        void luaError(sol::optional<std::string> maybe_msg);
         bool showDemoWin = (USE_DEBUG_DEMO_WIN && GLOBAL_DEBUG);
         bool isDebug = GLOBAL_DEBUG;
+        bool quit = false;
         int objCreatedCount = 0;
         
         SDL_Window* window;

@@ -4,6 +4,8 @@ local backgroundColor = Color.new(140, 52, 235, 255)
 
 function M.init()
     print("LOADING SCREEN")
+    warn("hi")
+    fault("bye")
     local box = Box.new(0, 0, 10000, 10000, backgroundColor)
     print(box ~= nil)
     box:setZIndex(0)
