@@ -11,7 +11,7 @@ NSArray *allowedTypes = @[
 
 BOOL fixActivationPolicy = NO;
 
-std::string getFileFromPicker(const filePickerSettings& settings) {
+std::string getFileFromPicker() {
     if (!fixActivationPolicy) {
         fixFileExplorerPolicy();
     }

@@ -281,7 +281,7 @@ namespace neptune {
                 case sol::type::boolean:
                     message += msg.as<bool>() ? "true" : "false";
                     break;
-                case sol::type::nil:
+                case sol::type::lua_nil:
                     message += "nil";
                     break;
                 default:
@@ -295,14 +295,14 @@ namespace neptune {
     void Game::initLua()
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::package);
-        main_lua_state.set_panic(sol::c_call<decltype(&luaError),luaError>);
-        main_lua_state["print"] = [this](sol::variadic_args args){
+        //main_lua_state.set_panic(sol::c_call<decltype(&Game::luaError),Game::luaError>);
+        main_lua_state["print"] = [](sol::variadic_args args){
             game_log(doMsg(args));
         };
-        main_lua_state["warn"] = [this](sol::variadic_args args){
+        main_lua_state["warn"] = [](sol::variadic_args args){
             game_log(doMsg(args), neptune::WARNING);
         };
-        main_lua_state["fault"] = [this](sol::variadic_args args){
+        main_lua_state["fault"] = [](sol::variadic_args args){
             game_log(doMsg(args), neptune::FAULT);
         };
         main_lua_state.set_function("halt", [](float haltTime){
