@@ -818,6 +818,7 @@ namespace neptune {
     }
     void Game::render(ImGuiIO& io)
     {
+        std::shared_lock lock(sceneMutex);
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
         int objectsRendered = 0;
@@ -869,6 +870,7 @@ namespace neptune {
     }
     void Game::loadNewScene(const std::string& newScene)
     {
+        std::unique_lock lock(sceneMutex);
         std::string workingSceneName = newScene;
         if (workingSceneName.empty()) {
             game_log("Scene name is empty! Falling back to default scene", neptune::WARNING);

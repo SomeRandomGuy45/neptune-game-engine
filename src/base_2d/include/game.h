@@ -296,6 +296,7 @@ namespace neptune {
         sol::state main_lua_state;
         std::vector<sol::function> updateFuncs;
         std::vector<std::string> luaScripts;
+        mutable std::shared_mutex sceneMutex;
         Camera camera;
         SceneLoadingService sceneLoadingService;
         PlatformService platformService;
