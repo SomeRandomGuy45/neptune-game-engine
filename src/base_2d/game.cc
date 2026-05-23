@@ -294,7 +294,7 @@ namespace neptune {
     }
     void Game::initLua()
     {
-        main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::package);
+        main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::io, sol::lib::debug, sol::lib::bit32, sol::lib::package, sol::lib::ffi, sol::lib::jit, sol::lib::string);
         //main_lua_state.set_panic(sol::c_call<decltype(&Game::luaError),Game::luaError>);
         main_lua_state["print"] = [](sol::variadic_args args){
             game_log(doMsg(args));
@@ -614,6 +614,9 @@ namespace neptune {
                 tempTable["w"] = 200;
                 tempTable["h"] = 200;
                 return tempTable;
+            }),
+            "getExecDir", sol::as_function([](Game& game) {
+                return std::filesystem::path(getExecutablePath()).parent_path().string();
             })
         );
         main_lua_state["game"] = this;
@@ -800,7 +803,7 @@ namespace neptune {
             }
             std::thread([this, init_func, &lua_mutex]() {
                 try {
-                    std::unique_lock<std::shared_mutex> lock(lua_mutex);
+                    std::lock_guard<std::shared_mutex> lock(lua_mutex);
                     sol::protected_function_result result = init_func();
                     if (!result.valid()) {
                         sol::error err = result;
