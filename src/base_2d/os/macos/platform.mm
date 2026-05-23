@@ -55,8 +55,22 @@ void debugFunction_01() {
 }
 
 int popUpWindow(const char* title, const char* message) {
-    // todo
-    NSLog(@"%s: %s", title, message);
+    //NSLog(@"%s: %s", title, message);
+    NSString *titleStr = [NSString stringWithUTF8String:title];
+    NSString *messageStr = [NSString stringWithUTF8String:message];
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:messageStr];
+    [alert setInformativeText:titleStr];
+    [alert setAlertStyle:NSAlertStyleWarning];
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Cancel"];
+    NSInteger result = [alert runModal];
+    if (result == NSAlertFirstButtonReturn) {
+        NSLog(@"OK clicked!");
+        return 1;
+    } else if (result == NSAlertSecondButtonReturn) {
+        return 2;
+    }
     return 0;
 }
 
