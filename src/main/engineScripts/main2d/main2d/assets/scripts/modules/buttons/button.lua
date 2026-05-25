@@ -11,7 +11,9 @@ function buttonBase:newButton(_text ,_x, _y, _w, _h, _color)
     self.button = Box.new(_x, _y, _w, _h, _color)
     local sizeText = game:getTextSize("FreeSans", _text)
     local btnText = Text.new(_x, _y, sizeText["w"], sizeText["h"], _text)
-    btnText:setBackgroundColor(_color)
+    sizeText = game:fixedTextSize(btnText, "FreeSans", _text, _x, _y, _w, _h)
+    btnText:setDim(sizeText["w"], sizeText["h"])
+    btnText:setZIndex(self.button:getZIndex() + 1)
     self.buttonText = btnText
     return self
 end

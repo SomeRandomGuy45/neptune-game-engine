@@ -12,7 +12,7 @@ namespace neptune {
         NONE = -1
     };
 
-    std::shared_mutex lua_mutex;
+    std::mutex lua_mutex;
 
     std::unordered_map<std::string, objectTypes> strToObjectTypes = {
         {"sprite", SPRITE},
@@ -93,9 +93,6 @@ namespace neptune {
         }
         return nullptr;
     }
-    Game::~Game() {
-        main_lua_state = sol::state();
-    }
     void Game::init() {
         #ifdef _WIN32
             ::SetProcessDPIAware();
@@ -115,6 +112,7 @@ namespace neptune {
                 fontName = fontName.substr(0, fontName.length() - 4);
                 game_log("Loading file: " + fontName + " Dir: " + dir.path().string());
                 fonts.insert({fontName, TTF_OpenFont(dir.path().string().c_str(), 24)});
+                fontPaths.insert({fontName, dir.path().string()});
             }
         }
         if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
@@ -211,7 +209,30 @@ namespace neptune {
                     inputService.runKeybindFunc(static_cast<int>(e.key.keysym.sym));
                 }
             }
+            while (!initFuncs.empty()) {
+                if (newSceneLoading) {
+                    break;
+                }
+                auto func = std::move(initFuncs.front());
+                initFuncs.pop();
+
+                try {
+                    std::scoped_lock lock(lua_mutex, sceneMutex);
+                    sol::protected_function_result result = func();
+                    if (!result.valid()) {
+                        sol::error err = result;
+                        luaError(std::string(err.what()));
+                    }
+                } catch (const sol::error& e) {
+                    game_log("Caught error: " + std::string(e.what()), neptune::FAULT);
+                } catch (...) {
+                    game_log("Caught unknown error!", neptune::FAULT);
+                }
+            }
             for (const auto& func : updateFuncs) {
+                if (newSceneLoading) {
+                    break;
+                }
                 try {
                     sol::protected_function_result result = func();
                     if (!result.valid()) {
@@ -224,7 +245,7 @@ namespace neptune {
                     game_log("Caught unknown error!", neptune::FAULT);
                 }
             }
-             // Start the Dear ImGui frame
+            // Start the Dear ImGui frame
             ImGui_ImplSDLRenderer2_NewFrame();
             ImGui_ImplSDL2_NewFrame();
             ImGui::NewFrame();
@@ -233,6 +254,14 @@ namespace neptune {
             }
 
             render(io);
+
+            if (!newSceneToLoad.empty()) {
+                loadNewScene(newSceneToLoad);
+                game_log("Loading new scripts");
+                loadLua(lua_mutex);
+                game_log("added");
+                newSceneToLoad = "";
+            }
         }
         for (const auto& [name, font] : fonts) {
             TTF_CloseFont(font);
@@ -294,7 +323,7 @@ namespace neptune {
     }
     void Game::initLua()
     {
-        main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::io, sol::lib::debug, sol::lib::bit32, sol::lib::package, sol::lib::ffi, sol::lib::jit, sol::lib::string);
+        main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::io, sol::lib::debug, sol::lib::bit32, sol::lib::package, sol::lib::coroutine, sol::lib::ffi, sol::lib::jit, sol::lib::string);
         //main_lua_state.set_panic(sol::c_call<decltype(&Game::luaError),Game::luaError>);
         main_lua_state["print"] = [](sol::variadic_args args){
             game_log(doMsg(args));
@@ -400,7 +429,7 @@ namespace neptune {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
-                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                    game_log("setPosition expected Vector2, got something else", neptune::WARNING);
                 }
             }),
             "changeText", sol::as_function([](neptune::Text& text, std::string newText){
@@ -409,11 +438,11 @@ namespace neptune {
             "setTextColor", sol::as_function([](neptune::Text& self, neptune::Color color) {
                 self.setTextColor(color.toSDL());
             }),
-            "setBackgroundColor", sol::as_function([](neptune::Text& self, neptune::Color color) {
-                self.setBackgroundColor(color.toSDL());
-            }),
             "returnFontName", sol::as_function([](neptune::Text& self) {
                 return self.returnFontName();
+            }),
+            "setDim", sol::as_function([](neptune::Text& self, float w, float h) {
+                self.setDim(w, h);
             }),
             sol::base_classes, sol::bases<neptune::Object>()
         );
@@ -444,7 +473,7 @@ namespace neptune {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
-                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                    game_log("setPosition expected Vector2, got something else", neptune::WARNING);
                 }
             }),
             sol::base_classes, sol::bases<neptune::Object>()
@@ -475,7 +504,7 @@ namespace neptune {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
-                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                    game_log("setPosition expected Vector2, got something else", neptune::WARNING);
                 }
             }),
             sol::base_classes, sol::bases<neptune::Object>()
@@ -508,7 +537,7 @@ namespace neptune {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
-                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                    game_log("setPosition expected Vector2, got something else", neptune::WARNING);
                 }
             }),
             sol::base_classes, sol::bases<neptune::Object>()
@@ -541,7 +570,7 @@ namespace neptune {
                     neptune::Vector2 vec = maybe_vec.as<neptune::Vector2>();
                     self.setPosition(vec.x, vec.y);
                 } else {
-                    game_log("Warning: setPosition expected Vector2, got something else", neptune::WARNING);
+                    game_log("setPosition expected Vector2, got something else", neptune::WARNING);
                 }
             }),
             sol::base_classes, sol::bases<neptune::Object>()
@@ -598,21 +627,57 @@ namespace neptune {
                 return g.platformService;
             }),
             "loadNewScene", sol::as_function([this](Game& game, std::string newScene) {
-                loadNewScene(newScene);
-                game_log("Loading new scripts");
-                loadLua(lua_mutex);
+                newSceneToLoad = newScene;
             }),
             "getTextSize", sol::as_function([this](Game& game, std::string fontName, std::string textToCalc) {
                 int w, h;
                 sol::table tempTable = main_lua_state.create_table();
-                if (TTF_SizeText(fonts[fontName], textToCalc.c_str(), &w, &h) == 0) {
+                tempTable["w"] = 200;
+                tempTable["h"] = 200;
+                if (TTF_SizeUTF8(fonts[fontName], textToCalc.c_str(), &w, &h) == 0) {
                     tempTable["w"] = w;
                     tempTable["h"] = h;
                     return tempTable;
                 }
                 game_log("Fallback for text!", neptune::DEBUG);
+                return tempTable;
+            }),
+            "fixedTextSize", sol::as_function([this](Game& game, Text& text, std::string fontName, std::string textToCalc, int boxX, int boxY, int boxW, int boxH) {
+                int size = 48;
+                TTF_Font* newFont = nullptr;
+                int textW, textH;
+                sol::table tempTable = main_lua_state.create_table();
+                tempTable["x"] = 200;
+                tempTable["y"] = 200;
                 tempTable["w"] = 200;
                 tempTable["h"] = 200;
+                auto it = fontPaths.find(fontName);
+                if (it == fontPaths.end()) {
+                    return tempTable;
+                }
+                while (size > 4) {
+                    if (newFont) {
+                        TTF_CloseFont(newFont);
+                    }
+                    newFont = TTF_OpenFont(fontPaths[fontName].c_str(), size);
+                    if (newFont == nullptr) {
+                        size--;
+                        continue;
+                    }
+                    TTF_SizeUTF8(newFont, textToCalc.c_str(), &textW, &textH);
+                    if (textW <= boxW && textH <= boxH) {
+                        break;
+                    }
+                    size--;
+                }
+                std::string newFontName = fontName + std::to_string(size) + "pt";
+                std::cout << "Font: " << newFontName << "\n";
+                fonts.insert({newFontName, newFont});
+                text.changeFont(newFontName);
+                tempTable["x"] = boxX + (boxW - textW) / 2;
+                tempTable["y"] = boxY + (boxH - textH) / 2;
+                tempTable["w"] = textW;
+                tempTable["h"] = textH;
                 return tempTable;
             }),
             "getExecDir", sol::as_function([](Game& game) {
@@ -624,7 +689,7 @@ namespace neptune {
     }
     void Game::moveFile(const std::string& outputDirType, const std::string& folderName, const std::string& folderPath, const std::string& execDir) {
         if (!std::filesystem::exists(folderPath + folderName + "/assets/" + outputDirType)) {
-            game_log("Warning: No " + outputDirType + " directory found in place! Skipping...", neptune::WARNING);
+            game_log("No " + outputDirType + " directory found in place! Skipping...", neptune::WARNING);
             return;
         }
         for (auto& dir : std::filesystem::directory_iterator(folderPath + folderName + "/assets/" + outputDirType)) {
@@ -780,43 +845,38 @@ namespace neptune {
             sceneLoadingService.insertScene(sceneName.get<std::string>(), std::move(doc));
         }
     }
-    void Game::loadLua(std::shared_mutex& lua_mutex)
+    void Game::loadLua(std::mutex& lua_mutex)
     {
+        initFuncs = {};
+        updateFuncs.clear();
+        inputService.clearKey();
         for (const std::string& file : luaScripts) {
             game_log("Loading script: " + file);
             sol::load_result script = main_lua_state.load_file(file);
             if (!script.valid()) {
+                game_log("Failed to load: " + file, neptune::FAULT);
                 continue;
             }
-            sol::table module = script();
+
+            sol::object result = script();
+            if (!result.valid() || result.get_type() != sol::type::table) {
+                game_log("Script must return a table: " + file, neptune::FAULT);
+                continue;
+            }
+
+            sol::table module = result;
+
             sol::protected_function init_func = module["init"];
+            if (init_func.valid() && init_func.get_type() == sol::type::function) {
+                game_log("Added init func for: " + file);
+                initFuncs.push(init_func);
+            }
+
             sol::protected_function update_func = module["update"];
-            auto moduleBlock = module["isModule"];
-            if (moduleBlock.valid()) {
-                if (typeid(moduleBlock) == typeid(bool) && moduleBlock.get<bool>() == true) {
-                    continue;
-                }
+            if (update_func.valid() && update_func.get_type() == sol::type::function) {
+                game_log("Added update func for: " + file);
+                updateFuncs.push_back(update_func);
             }
-            if (!init_func.valid()) {
-                game_log("init func is not valid or is empty", neptune::FAULT);
-                continue;
-            }
-            std::thread([this, init_func, &lua_mutex]() {
-                try {
-                    std::lock_guard<std::shared_mutex> lock(lua_mutex);
-                    sol::protected_function_result result = init_func();
-                    if (!result.valid()) {
-                        sol::error err = result;
-                        luaError(std::string(err.what()));
-                    }
-                } catch (const sol::error& e) {
-                    game_log("Caught error: " + std::string(e.what()), neptune::FAULT);
-                } catch (...) {
-                    game_log("Caught unknown error!", neptune::FAULT);
-                }
-            }).detach();
-            game_log("Ran init function for: " + file);
-            updateFuncs.emplace_back(update_func);
         }
     }
     void Game::render(ImGuiIO& io)
@@ -873,13 +933,13 @@ namespace neptune {
     }
     void Game::loadNewScene(const std::string& newScene)
     {
+        newSceneLoading = true;
         std::unique_lock lock(sceneMutex);
         std::string workingSceneName = newScene;
         if (workingSceneName.empty()) {
             game_log("Scene name is empty! Falling back to default scene", neptune::WARNING);
             workingSceneName = sceneLoadingService.defaultScene;
         }
-        updateFuncs.clear();
         luaScripts.clear();
         workspace.objects.clear();
         workspace.objects_base.clear();
@@ -1018,21 +1078,7 @@ namespace neptune {
                             textColor.a = static_cast<Uint8>(transparencyValue * 255);
                         }
 
-                        SDL_Color backgroundColor = {0, 0, 0, 0};
-                        if (node.attribute("hexRbg").as_string()) {
-                            std::string colorStr = std::string(node.attribute("hexRbg").as_string()).substr(1); // Remove the '#' character
-                            unsigned long colorValue = std::stoul(colorStr, nullptr, 16);
-                            backgroundColor.r = (colorValue >> 16) & 0xFF;
-                            backgroundColor.g = (colorValue >> 8) & 0xFF;
-                            backgroundColor.b = colorValue & 0xFF;
-                        }
-                        if (node.attribute("transparency").as_string()) {
-                            std::string transparencyStr = node.attribute("transparency").as_string();
-                            float transparencyValue = std::stof(transparencyStr);
-                            backgroundColor.a = static_cast<Uint8>(transparencyValue * 255);
-                        }
-
-                        newObj = std::make_unique<neptune::Text>(x, y, w, h, textStr, "FreeSans", textColor, backgroundColor);
+                        newObj = std::make_unique<neptune::Text>(x, y, w, h, textStr, "FreeSans", textColor);
                         if (node.attribute("zIndex").as_string()) {
                             newObj->setZIndex(node.attribute("zIndex").as_int());
                         } else {                            
@@ -1070,5 +1116,6 @@ namespace neptune {
                 workspace.addBaseObject(std::move(newAudio), main_lua_state);
             }
         }
+        newSceneLoading = false;
     }
 } // namespace neptune

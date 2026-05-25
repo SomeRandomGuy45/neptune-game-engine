@@ -40,7 +40,8 @@ int runApp(int argc, char **argv) {
         neptune::game_log("File path: " + filePath);
         game.loadGame_DEBUG(filePath, false);
     }
-    neptune::popUpWindow("Test!", "Hi pop-up window test!");
+    int output = neptune::popUpWindow("Test!", "Hi pop-up window test!");
+    std::cout << output << "\n";
     game.initLua();
     game.loadNewScene();
     //initTestGame(game);

@@ -335,7 +335,7 @@ void Text::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, C
             game_log("Font is null!", neptune::FAULT);
             return;
         }
-        SDL_Surface* surface = TTF_RenderUTF8_LCD(fonts[fontName], text.c_str(), text_color, background_color);
+        SDL_Surface* surface = TTF_RenderUTF8_Blended(fonts[fontName], text.c_str(), text_color);
         if (!surface) {
             game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
             return;

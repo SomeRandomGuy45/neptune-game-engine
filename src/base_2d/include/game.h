@@ -14,6 +14,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <set>
+#include <queue>
 #include <zip.h>
 
 #include "json.hpp"
@@ -227,6 +228,7 @@ namespace neptune {
         void bindKeybind(int key, sol::protected_function func);
         void runKeybindFunc(int key);
         void setCurrentKeyDown(int key) { currentKeyDown = key; }
+        void clearKey() {keybinds.clear();}
         int getKeyDown();
     private:
         std::map<int, sol::protected_function> keybinds;
@@ -258,10 +260,13 @@ namespace neptune {
         BaseObjectVariant* getObject(const std::string& name);
     };
 
+    class ImGuiService {
+    public:
+        
+    };
+
     class Game {
     public:
-        ~Game();
-
         Workspace workspace;
         InputService inputService;
         void init();
@@ -269,7 +274,7 @@ namespace neptune {
         void addLuaScript(const std::string& scriptPath) {
             luaScripts.push_back(std::filesystem::path(getExecutablePath()).parent_path().string() + "/assets/scripts/" + scriptPath);
         }
-        void loadLua(std::shared_mutex& lua_mutex);
+        void loadLua(std::mutex& lua_mutex);
         void addObject(std::unique_ptr<neptune::Object> obj) {
             workspace.addObject(std::move(obj), main_lua_state);
         }    
@@ -289,13 +294,16 @@ namespace neptune {
         bool showDemoWin = (USE_DEBUG_DEMO_WIN && GLOBAL_DEBUG);
         bool isDebug = GLOBAL_DEBUG;
         bool quit = false;
+        bool newSceneLoading = false;
         int objCreatedCount = 0;
         
         SDL_Window* window;
         SDL_Renderer* renderer;
         sol::state main_lua_state;
+        std::string newSceneToLoad;
         std::vector<sol::function> updateFuncs;
         std::vector<std::string> luaScripts;
+        std::queue<sol::protected_function> initFuncs;
         mutable std::shared_mutex sceneMutex;
         Camera camera;
         SceneLoadingService sceneLoadingService;

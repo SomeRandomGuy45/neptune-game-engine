@@ -25,6 +25,7 @@ enum NEPTUNE_MUSIC_STATE {
 };
 
 inline std::unordered_map<std::string, TTF_Font*> fonts;
+inline std::unordered_map<std::string, std::string> fontPaths;
 
 class Color {
 public:
@@ -249,8 +250,8 @@ private:
 
 class Text : public Object {
 public:
-    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 255}, SDL_Color _background_color = SDL_Color{.r = 0, .g = 0, .b = 0, .a = 0}) : 
-        x(_x), y(_y), w(_w), h(_h), text_color(_text_color), background_color(_background_color), text(_text), fontName(_fontName) {
+    Text(float _x, float _y, float _w, float _h, std::string _text, std::string _fontName = "FreeSans", SDL_Color _text_color = SDL_Color{.r = 255, .g = 255, .b  = 255, .a = 255}) : 
+        x(_x), y(_y), w(_w), h(_h), text_color(_text_color), text(_text), fontName(_fontName) {
             name = "Text";
         };
     void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) override;
@@ -259,9 +260,10 @@ public:
     float getY() {return y;};
 
     void setPosition(float _x, float _y);
+    void setDim(float _w, float _h) { w = _w; h = _h; };
     void setTextColor(SDL_Color newColor) { text_color = newColor; }
-    void setBackgroundColor(SDL_Color newColor) { background_color = newColor; }
     void changeText(std::string newText);
+    void changeFont(std::string newFont) { std::cout << "new font: " << newFont << "\n"; fontName = newFont; }
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     std::string returnFontName() { return fontName; }
@@ -271,7 +273,6 @@ private:
     SDL_Texture* texture = nullptr;
     float x, y, w, h;
     SDL_Color text_color;
-    SDL_Color background_color;
     std::string text, fontName;
 };
 

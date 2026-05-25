@@ -160,7 +160,7 @@ end
 -- is a table containing the attributes of the tag
 local function parseTag(self, s)
     local tag = {
-            name = string.gsub(s, self._TAG, '%1'),
+            name = string.gsub(tostring(s), self._TAG, '%1'),
             attrs = {}
           }            
 
