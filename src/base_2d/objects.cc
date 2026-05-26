@@ -71,6 +71,15 @@ void Audio::Destroy() {
     channel = -2;
 }
 
+float Vector2::getMagnitude(const Vector2& vec) {
+    float dx = x - vec.x;
+    float dy = y - vec.y;
+
+    float distX = dx * dx;
+    float distY = dy * dy;
+    return sqrt(distX + distY);
+}
+
 /*
 * OBJECTS
 */
@@ -85,12 +94,19 @@ void Box::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Ca
     /*
      * https://stackoverflow.com/a/25481777
      */
-    float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float renderY = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
 
     if (renderer == nullptr) {
         game_log("Renderer is null!!! This is not cool!", neptune::CRITICAL);
     }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_Rect rect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
     SDL_RenderFillRect(renderer, &rect);
@@ -125,8 +141,14 @@ void Box::DoEventCallback(NEPTUNE_CALLBACK callback)
 }
 
 bool Box::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) {
-    float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float renderY = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
     return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
@@ -137,8 +159,14 @@ void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGH
     /*
      * https://stackoverflow.com/a/25481777
     */
-    float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float renderY = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
     SDL_Vertex vertices[] = {
         {{renderX, renderY}, color, {1, 1}},
         {{renderX + w, renderY}, color, {1, 1}},
@@ -147,6 +175,7 @@ void Triangle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGH
     if (renderer == nullptr) {
         game_log("Renderer is null!!! This is not cool!", neptune::CRITICAL);
     }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderGeometry(renderer, nullptr, vertices, 3, nullptr, 0);
 }
@@ -176,8 +205,14 @@ void Triangle::DoEventCallback(NEPTUNE_CALLBACK callback)
 
 bool Triangle::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) {
     // Calculate triangle's screen coordinates
-    float x1 = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float y1 = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float x1 = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float y1 = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
     
     float x2 = x1 + w;
     float y2 = y1;
@@ -202,14 +237,21 @@ bool Triangle::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HE
 
 void Circle::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera)
 {
-    float renderX = (x - camera.x) + ((SCREEN_WIDTH / 2) - (radius));
-    float renderY = (y - camera.y) + ((SCREEN_HEIGHT / 2) - (radius));
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + ((SCREEN_WIDTH / 2) - (radius));
+    float renderY = (y - camY) + ((SCREEN_HEIGHT / 2) - (radius));
 
     int offsetx, offsety, d;
     offsetx = 0;
     offsety = radius;
     d = radius - 1;
 
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
     while (offsety >= offsetx) {
@@ -261,8 +303,14 @@ void Circle::DoEventCallback(NEPTUNE_CALLBACK callback)
 }
 
 bool Circle::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) {
-    float renderX = (x - camera.x) + ((SCREEN_WIDTH / 2) - (radius));
-    float renderY = (y - camera.y) + ((SCREEN_HEIGHT / 2) - (radius));
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + ((SCREEN_WIDTH / 2) - (radius));
+    float renderY = (y - camY) + ((SCREEN_HEIGHT / 2) - (radius));
     float dx = mouseX - renderX;
     float dy = mouseY - renderY;
     return (dx * dx + dy * dy) <= (radius * radius);
@@ -285,8 +333,14 @@ void Sprite::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT,
         }
     }
     
-    float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float renderY = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
     SDL_Rect renderRect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
     if (color.a != 0 || color.r != 0 || color.g != 0 || color.b != 0) {
         SDL_SetTextureColorMod(texture, color.r, color.g, color.b);
@@ -319,8 +373,14 @@ void Sprite::DoEventCallback(NEPTUNE_CALLBACK callback)
 }
 
 bool Sprite::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) {
-    float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float renderY = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
     return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
@@ -346,10 +406,20 @@ void Text::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, C
             game_log("Couldn't load texture! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
         }
     }   
-    float renderX = (x - camera.x) + (SCREEN_WIDTH / 2) - (w / 2);
-    float renderY = (y - camera.y) + (SCREEN_HEIGHT / 2) - (h / 2);
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
     SDL_Rect renderRect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
     SDL_RenderCopy(renderer, texture, nullptr, &renderRect);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    renderBoxRect = {static_cast<int>(renderX), static_cast<int>(renderY), static_cast<int>(w), static_cast<int>(h)};
+    SDL_RenderFillRect(renderer, &renderBoxRect);
     SDL_DestroyTexture(texture);
     texture = nullptr;
 }
@@ -371,12 +441,30 @@ void Text::changeText(std::string newText) {
 
 void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
 {
+    if (callback == MOUSE && currentEditTextboxId.empty() && isEditable) {
+        textOldName = this->name;
+        // TODO: Random str
+        this->name = "textEditing";
+        currentEditTextboxId = this->name;
+        currentInputtedText = this->text;
+        std::cout << this->name << "\n";
+        SDL_StartTextInput();
+        SDL_SetTextInputRect(&renderBoxRect);
+    }
     return;
 }
 
 bool Text::isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera)
 {
-    return false;
+    int camX = camera.x;
+    int camY = camera.y;
+    if (!followCam) {
+        camX = 0;
+        camY = 0;
+    }
+    float renderX = (x - camX) + (SCREEN_WIDTH / 2) - (w / 2);
+    float renderY = (y - camY) + (SCREEN_HEIGHT / 2) - (h / 2);
+    return (mouseX >= renderX && mouseX <= renderX + w && mouseY >= renderY && mouseY <= renderY + h);
 }
 
 } // namespace neptune

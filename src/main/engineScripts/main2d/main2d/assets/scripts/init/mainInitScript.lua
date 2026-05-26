@@ -14,10 +14,8 @@ function M.init()
    parser:parse(xml)
    -- why isn't there a continue built in
    -- rahhhhh
-   for i, v in pairs(handler.root.buttons) do
-      if i ~= "button" then
-         goto continue
-      end
+   xml2lua.printable(handler.root.buttons.button)
+   for _, v in pairs(handler.root.buttons.button) do
       --print(i, "Text:", v.text)
       local btnText = v.text
       local colorTag = v.color
@@ -29,8 +27,12 @@ function M.init()
       local btnH = tonumber(v._attr.h)
       print(btnText, btnX, btnY, btnW, btnH)
       buttons[btnId] = buttonLib:newButton(btnText, btnX, btnY, btnW, btnH, btnColor)
-      ::continue::
    end
+   for _, v in pairs(buttons) do
+      print(_, v)
+   end
+   local btn1Vec = buttons["testButton"]:getPosition()
+   print(btn1Vec:getMagnitude(buttons["testButton2"]:getPosition()))
    --[[
    buttons["test1"] = buttonLib:newButton("Test! How are you!", 0, 0, 250, 100, Color.new(255, 0, 0, 255))
    -- Okay ig

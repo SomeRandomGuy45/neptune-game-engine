@@ -23,4 +23,12 @@ function buttonBase:setMouseCallback(func)
     self.button:setMouseCallBack(func)
 end
 
+function buttonBase:setCamFollow(newCamFollow)
+    self.button:changeCamFollow(newCamFollow)
+end
+
+function buttonBase:getPosition()
+    return Vector2.new(self.x, self.y)
+end
+
 return buttonBase

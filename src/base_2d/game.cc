@@ -84,12 +84,28 @@ namespace neptune {
         if (it != objects.end()) {
             return &it->second;
         }
+        for (auto& [key, value] : objects) {
+            bool match = std::visit([&](const auto& ptr) {
+                return ptr && ptr->name == name;
+            }, value);
+            if (match) {
+                return &value;
+            }
+        }
         return nullptr;
     }
     BaseObjectVariant* Workspace::getObject(const std::string& name) {
         auto it = objects_base.find(name);
         if (it!= objects_base.end()) {
             return &it->second;
+        }
+        for (auto& [key, value] : objects_base) {
+            bool match = std::visit([&](const auto& ptr) {
+                return ptr && ptr->name == name;
+            }, value);
+            if (match) {
+                return &value;
+            }
         }
         return nullptr;
     }
@@ -204,10 +220,35 @@ namespace neptune {
                         }, objVariant);                                       
                     }
                 }
-                if (e.type == SDL_KEYDOWN) {
+                if (e.type == SDL_TEXTINPUT && !currentEditTextboxId.empty()) {
+                    currentInputtedText += e.text.text;
+                    auto* variant = workspace.getDrawObject(currentEditTextboxId);
+                    auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
+                    textPtr->changeText(currentInputtedText);
+                }
+                if (e.type == SDL_KEYDOWN && !SDL_IsTextInputActive() && currentEditTextboxId.empty()) {
                     inputService.setCurrentKeyDown(static_cast<int>(e.key.keysym.sym));
                     inputService.runKeybindFunc(static_cast<int>(e.key.keysym.sym));
+                } else if (e.type == SDL_KEYDOWN && SDL_IsTextInputActive() && !currentEditTextboxId.empty()) {
+                    if (e.key.keysym.sym == SDLK_RETURN) {
+                        SDL_StopTextInput();
+                        auto* variant = workspace.getDrawObject(currentEditTextboxId);
+                        auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
+                        textPtr->changeText(currentInputtedText);
+                        textPtr->name = textOldName;
+                        currentInputtedText = "";
+                        textOldName = "";
+                        currentEditTextboxId = "";
+                    } else if (e.key.keysym.sym == SDLK_BACKSPACE) {
+                        if (!currentInputtedText.empty()) {
+                            currentInputtedText.pop_back();
+                        }
+                        auto* variant = workspace.getDrawObject(currentEditTextboxId);
+                        auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
+                        textPtr->changeText(currentInputtedText);
+                    }
                 }
+
             }
             while (!initFuncs.empty()) {
                 if (newSceneLoading) {
@@ -260,7 +301,13 @@ namespace neptune {
                 game_log("Loading new scripts");
                 loadLua(lua_mutex);
                 game_log("added");
+                currentInputtedText = "";
+                textOldName = "";
+                currentEditTextboxId = "";
                 newSceneToLoad = "";
+                if (SDL_IsTextInputActive()) {
+                    SDL_StopTextInput();
+                }
             }
         }
         for (const auto& [name, font] : fonts) {
@@ -365,7 +412,8 @@ namespace neptune {
                 obj.name = newName; 
             }),
             "setZIndex" , &Object::setZIndex,
-            "getZIndex", &Object::getZIndex
+            "getZIndex", &Object::getZIndex,
+            "changeCamFollow", &Object::changeCamFollow
         );
         
         main_lua_state.new_usertype<neptune::BaseObject>("BaseObject", 
@@ -392,7 +440,10 @@ namespace neptune {
             sol::constructors<Vector2(float, float)>(),
             "getX", &Vector2::getX, "setX", &Vector2::setX,
             "getY", &Vector2::getY, "setY", &Vector2::setY,
-            "setFromTable", &Vector2::setFromTable
+            "setFromTable", &Vector2::setFromTable,
+            "getMagnitude", sol::as_function([](neptune::Vector2& selfVec, neptune::Vector2& otherVec) {
+                return selfVec.getMagnitude(otherVec);
+            })
         );
         main_lua_state.new_usertype<neptune::EventListener>("EventListener",
             sol::constructors<EventListener()>(),
@@ -444,6 +495,7 @@ namespace neptune {
             "setDim", sol::as_function([](neptune::Text& self, float w, float h) {
                 self.setDim(w, h);
             }),
+            "setTextEditable", &Text::setTextEditable,
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",

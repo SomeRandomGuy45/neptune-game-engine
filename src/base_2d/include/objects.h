@@ -26,6 +26,9 @@ enum NEPTUNE_MUSIC_STATE {
 
 inline std::unordered_map<std::string, TTF_Font*> fonts;
 inline std::unordered_map<std::string, std::string> fontPaths;
+inline std::string currentEditTextboxId = "";
+inline std::string textOldName = "";
+inline std::string currentInputtedText = "";
 
 class Color {
 public:
@@ -59,10 +62,11 @@ public:
     float x, y;
     Vector2(float _x, float _y) : 
         x(_x), y(_y) {}
-    void setX(float _x) { x = _x; }
-    void setY(float _y) { y = _y; }
     float getX() { return x;}
     float getY() { return y;}
+    float getMagnitude(const Vector2& vec);
+    void setX(float _x) { x = _x; }
+    void setY(float _y) { y = _y; }
     void setFromTable(sol::table table) {
         x = static_cast<float>(table.get_or("x", 0));
         y = static_cast<float>(table.get_or("y", 0));
@@ -72,7 +76,7 @@ public:
 // Non drawble objects
 class BaseObject {
 public:
-    std::string name;
+    std::string name = "";
     virtual ~BaseObject() = default;
     void setName(const std::string& _name) { name = _name; }
 };
@@ -139,12 +143,14 @@ private:
 // Drawable objects
 class Object {
 public:
-    std::string name;
+    std::string name = "";
     int zIndex;
     bool didRender = false;
+    bool followCam = true;
     virtual ~Object() = default;
     virtual void render(SDL_Renderer* renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera) = 0;
     void setName(const std::string& _name) { name = _name; }
+    void changeCamFollow(bool shouldFollow) { followCam = shouldFollow; }
     void setZIndex(int _zIndex) { zIndex = _zIndex; }
     int getZIndex() { return zIndex; }
 }; 
@@ -167,6 +173,8 @@ public:
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
+
+    std::string name = "";
 private:
     std::list<sol::protected_function> mouseCallbacks;
     float x, y, w, h;
@@ -191,6 +199,8 @@ public:
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
+
+    std::string name = "";
 private:
     std::list<sol::protected_function> mouseCallbacks;
     float x, y, w, h;
@@ -214,6 +224,8 @@ public:
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
+
+    std::string name = "";
 private:
     std::list<sol::protected_function> mouseCallbacks;
     float x, y, radius;
@@ -240,6 +252,8 @@ public:
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
+
+    std::string name = "";
 private:
     SDL_Texture* texture = nullptr;
     SDL_Color color{0,0,0,0};
@@ -260,7 +274,8 @@ public:
     float getY() {return y;};
 
     void setPosition(float _x, float _y);
-    void setDim(float _w, float _h) { w = _w; h = _h; };
+    void setDim(float _w, float _h) { w = _w; h = _h; }
+    void setTextEditable(bool newEditableSetting) { isEditable = newEditableSetting; }
     void setTextColor(SDL_Color newColor) { text_color = newColor; }
     void changeText(std::string newText);
     void changeFont(std::string newFont) { std::cout << "new font: " << newFont << "\n"; fontName = newFont; }
@@ -269,9 +284,13 @@ public:
     std::string returnFontName() { return fontName; }
 
     bool isClicked(int mouseX, int mouseY, int SCREEN_WIDTH, int SCREEN_HEIGHT, Camera camera);
+
+    std::string name = "";
 private:
     SDL_Texture* texture = nullptr;
+    SDL_Rect renderBoxRect;
     float x, y, w, h;
+    bool isEditable = false;
     SDL_Color text_color;
     std::string text, fontName;
 };
