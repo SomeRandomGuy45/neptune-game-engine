@@ -1,4 +1,5 @@
 {
     "fullscreen" : false,
-    "resizable" : true
+    "resizable" : true,
+    "setToMaxRes" : true
 }

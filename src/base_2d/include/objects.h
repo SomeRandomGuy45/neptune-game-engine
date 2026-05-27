@@ -17,7 +17,8 @@
 namespace neptune {
 
 enum NEPTUNE_CALLBACK {
-    MOUSE = 0x00000001
+    MOUSE = 0x00000001,
+    INPUT_FINISHED = 0x00000002
 };
 
 enum NEPTUNE_MUSIC_STATE {
@@ -279,6 +280,7 @@ public:
     void setTextColor(SDL_Color newColor) { text_color = newColor; }
     void changeText(std::string newText);
     void changeFont(std::string newFont) { std::cout << "new font: " << newFont << "\n"; fontName = newFont; }
+    void inputFinished(sol::protected_function func) { textEvents.push_back(func); }
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     std::string returnFontName() { return fontName; }
@@ -287,6 +289,7 @@ public:
 
     std::string name = "";
 private:
+    std::list<sol::protected_function> textEvents;
     SDL_Texture* texture = nullptr;
     SDL_Rect renderBoxRect;
     float x, y, w, h;

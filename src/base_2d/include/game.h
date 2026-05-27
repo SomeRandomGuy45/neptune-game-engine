@@ -295,6 +295,7 @@ namespace neptune {
         bool isDebug = GLOBAL_DEBUG;
         bool quit = false;
         bool newSceneLoading = false;
+        bool setToMaxRes = false;
         int objCreatedCount = 0;
         
         SDL_Window* window;

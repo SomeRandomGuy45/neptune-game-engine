@@ -434,22 +434,21 @@ void Text::changeText(std::string newText) {
     text = newText;
 }
 
-/*
-* These 2 callbacks a required in the while loop
-* One easy way to get out of it is just return false
-*/
-
 void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
 {
     if (callback == MOUSE && currentEditTextboxId.empty() && isEditable) {
         textOldName = this->name;
         // TODO: Random str
-        this->name = "textEditing";
+        this->name = randomStr(10);
         currentEditTextboxId = this->name;
         currentInputtedText = this->text;
-        std::cout << this->name << "\n";
+        game_log("Currently editing text: " + this->name + " original name: " + textOldName);
         SDL_StartTextInput();
         SDL_SetTextInputRect(&renderBoxRect);
+    } else if (callback == INPUT_FINISHED && isEditable) {
+        for (const auto& callback : textEvents) {
+            callback();
+        }
     }
     return;
 }

@@ -94,4 +94,20 @@ std::string get_current_logfile() {
     return log_path;
 }
 
+std::string randomStr(int length) {
+    const std::string CHARACTERS
+        = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv"
+          "wxyz0123456789";
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<> distribution(
+        0, CHARACTERS.size() - 1);
+    std::string randStr;
+    for (int i = 0; i < length; ++i) {
+        randStr
+            += CHARACTERS[distribution(generator)];
+    }
+    return randStr;
+}
+
 }

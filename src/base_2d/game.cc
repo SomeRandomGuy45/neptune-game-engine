@@ -142,7 +142,17 @@ namespace neptune {
         #ifdef SDL_HINT_IME_SHOW_UI
             SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
         #endif
-        window = SDL_CreateWindow(sceneLoadingService.gameName.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | flags);
+        if (setToMaxRes) {
+            game_log("Setting to max res...");
+            SDL_DisplayMode displayMode;
+            if (SDL_GetDesktopDisplayMode(0, &displayMode) == 0) {
+                SCREEN_WIDTH = displayMode.w;
+                SCREEN_HEIGHT = displayMode.h;
+            }
+        }
+        window = SDL_CreateWindow(sceneLoadingService.gameName.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | flags);
+        SDL_GetWindowSize(window, &SCREEN_WIDTH, &SCREEN_HEIGHT);
+        std::cout << "W x H:" << SCREEN_WIDTH << " : " << SCREEN_HEIGHT << "\n";
         if(!window)
         {
             game_log("Window could not be created! SDL_Error: " + std::string(SDL_GetError()), neptune::CRITICAL);
@@ -235,7 +245,12 @@ namespace neptune {
                         auto* variant = workspace.getDrawObject(currentEditTextboxId);
                         auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
                         textPtr->changeText(currentInputtedText);
+                        textPtr->DoEventCallback(INPUT_FINISHED);
                         textPtr->name = textOldName;
+                        game_log("Setting text name to: " + textOldName);
+                        if (textPtr->name != textOldName) {
+                            game_log("name change failed!");
+                        }
                         currentInputtedText = "";
                         textOldName = "";
                         currentEditTextboxId = "";
@@ -300,7 +315,7 @@ namespace neptune {
                 loadNewScene(newSceneToLoad);
                 game_log("Loading new scripts");
                 loadLua(lua_mutex);
-                game_log("added");
+                game_log("Finished loading");
                 currentInputtedText = "";
                 textOldName = "";
                 currentEditTextboxId = "";
@@ -343,6 +358,21 @@ namespace neptune {
         mainMessage += "Exiting now!";
         game_log(mainMessage, neptune::CRITICAL);
     }
+    // https://sol2.readthedocs.io/en/latest/exceptions.html#exception-handling
+    int luaExceptionHandler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description) {
+        std::string msg = "An exception has occurred! Info: ";
+        if (maybe_exception) {
+            msg += "(from exception): ";
+            const std::exception& ex = *maybe_exception;
+            msg += ex.what();
+        } else {
+            msg += "(from description parameter): ";
+            const std::string& str = std::string(description.data(), description.size());
+            msg += str;
+        }
+        game_log(msg, neptune::FAULT);
+        return sol::stack::push(L, description);
+    }
     std::string doMsg(sol::variadic_args args) {
         std::string message;
         for (auto msg : args) {
@@ -371,7 +401,8 @@ namespace neptune {
     void Game::initLua()
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::io, sol::lib::debug, sol::lib::bit32, sol::lib::package, sol::lib::coroutine, sol::lib::ffi, sol::lib::jit, sol::lib::string);
-        //main_lua_state.set_panic(sol::c_call<decltype(&Game::luaError),Game::luaError>);
+        main_lua_state.set_panic(sol::c_call<decltype(&Game::luaError),Game::luaError>);
+        main_lua_state.set_exception_handler(&luaExceptionHandler);
         main_lua_state["print"] = [](sol::variadic_args args){
             game_log(doMsg(args));
         };
@@ -496,6 +527,7 @@ namespace neptune {
                 self.setDim(w, h);
             }),
             "setTextEditable", &Text::setTextEditable,
+            "inputFinished", &Text::inputFinished,
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
@@ -878,6 +910,9 @@ namespace neptune {
             if (isResizable) {
                 flags |= SDL_WINDOW_RESIZABLE;
             }
+        }
+        if (sceneLoadingService.configJson.contains("setToMaxRes") && sceneLoadingService.configJson["setToMaxRes"].is_boolean()) {
+            setToMaxRes = sceneLoadingService.configJson["setToMaxRes"];
         }
         objCreatedCount = 0;
         moveFile("sprite_data", folderName, folderPath, execDir);

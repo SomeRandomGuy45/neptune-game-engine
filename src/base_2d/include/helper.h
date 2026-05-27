@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <random>
 
 /*
 * Lib stuff going to be RIPPED from simple
@@ -69,6 +70,8 @@ void game_log(const std::string& message, NEPTUNE_LOGLEVEL level = DEFAULT);
 std::string getExecutablePath();
 
 std::string get_current_logfile();
+
+std::string randomStr(int length);
 
 inline std::string currentLogPath = get_current_logfile();
 
