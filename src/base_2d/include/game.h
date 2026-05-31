@@ -297,6 +297,7 @@ namespace neptune {
         bool newSceneLoading = false;
         bool setToMaxRes = false;
         int objCreatedCount = 0;
+        Uint64 startTime;
         
         SDL_Window* window;
         SDL_Renderer* renderer;

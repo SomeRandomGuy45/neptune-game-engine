@@ -159,7 +159,7 @@ namespace neptune {
             exit(1);
         }
         game_log("Made Window");
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         SDL_RenderSetLogicalSize(renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
         if (!renderer)
         {
@@ -199,6 +199,9 @@ namespace neptune {
 
         game_log("Loading scripts from 1st scene");
         loadLua(lua_mutex);
+        startTime = SDL_GetPerformanceCounter();
+        Uint64 currentTime = SDL_GetTicks64();
+        double deltaTime = 0.0;
         while (!quit) {
             SDL_Event e;
             while (SDL_PollEvent(&e) != 0) {
@@ -290,7 +293,7 @@ namespace neptune {
                     break;
                 }
                 try {
-                    sol::protected_function_result result = func();
+                    sol::protected_function_result result = func(deltaTime);
                     if (!result.valid()) {
                         sol::error err = result;
                         luaError(std::string(err.what()));
@@ -324,6 +327,10 @@ namespace neptune {
                     SDL_StopTextInput();
                 }
             }
+
+            currentTime = SDL_GetPerformanceCounter();
+            deltaTime = (double)(currentTime - startTime) / (double)SDL_GetPerformanceFrequency();
+            startTime = SDL_GetPerformanceCounter();
         }
         for (const auto& [name, font] : fonts) {
             TTF_CloseFont(font);

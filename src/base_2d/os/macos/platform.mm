@@ -64,6 +64,7 @@ int popUpWindow(const char* title, const char* message) {
     [alert setAlertStyle:NSAlertStyleWarning];
     [alert addButtonWithTitle:@"OK"];
     [alert addButtonWithTitle:@"Cancel"];
+    alert.icon = [NSImage imageNamed:NSImageNameCaution];
     NSInteger result = [alert runModal];
     if (result == NSAlertFirstButtonReturn) {
         NSLog(@"OK clicked!");

@@ -2,6 +2,7 @@ local M = {}
 
 -- MODULES
 local buttonLib = require("modules.buttons.button")
+local buttonFuncs = require("init.buttonFuncs")
 local xml2lua = require("modules.xml.xml2lua")
 local handler = require("modules.xml.xmlhandler.tree")
 
@@ -27,6 +28,11 @@ function M.init()
       local btnH = tonumber(v._attr.h)
       print(btnText, btnX, btnY, btnW, btnH)
       buttons[btnId] = buttonLib:newButton(btnText, btnX, btnY, btnW, btnH, btnColor)
+      local func = buttonFuncs[btnId]
+      if func ~= nil then
+         print("Button: " .. btnID .. " , has a function! Adding now!")
+         buttons[btnId]:setMouseCallback(func)
+      end
    end
    for _, v in pairs(buttons) do
       print(_, v)
@@ -48,8 +54,8 @@ function M.init()
 
 end
 
-function M.update()
-   
+function M.update(dt)
+   --print(dt)
 end
 
 return M

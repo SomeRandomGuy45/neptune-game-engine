@@ -438,14 +438,13 @@ void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
 {
     if (callback == MOUSE && currentEditTextboxId.empty() && isEditable) {
         textOldName = this->name;
-        // TODO: Random str
         this->name = randomStr(10);
         currentEditTextboxId = this->name;
         currentInputtedText = this->text;
         game_log("Currently editing text: " + this->name + " original name: " + textOldName);
         SDL_StartTextInput();
         SDL_SetTextInputRect(&renderBoxRect);
-    } else if (callback == INPUT_FINISHED && isEditable) {
+    } else if (callback == INPUT_FINISHED && isEditable && !textEvents.empty()) {
         for (const auto& callback : textEvents) {
             callback();
         }
