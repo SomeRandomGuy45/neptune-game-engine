@@ -290,7 +290,8 @@ namespace neptune {
     private:
         void render(ImGuiIO& io);
         void moveFile(const std::string& outputDirType, const std::string& folderName, const std::string& folderPath, const std::string& execDir);
-        void luaError(sol::optional<std::string> maybe_msg);
+        static void luaError(sol::optional<std::string> maybe_msg);
+        static int luaExceptionHandler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description);
         bool showDemoWin = (USE_DEBUG_DEMO_WIN && GLOBAL_DEBUG);
         bool isDebug = GLOBAL_DEBUG;
         bool quit = false;

@@ -134,6 +134,9 @@ namespace neptune {
         if (Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024) < 0) {
             game_log("SDL_mixer could not initialize! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::CRITICAL);
         }
+        if (Mix_Init(MIX_INIT_MP3 | MIX_INIT_FLAC) == 0) {
+            game_log("Couldn't run Mix_Init! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::CRITICAL);
+        }
         Mix_AllocateChannels(32);
         //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
         for (const auto& [name, font] : fonts) {
@@ -366,7 +369,7 @@ namespace neptune {
         game_log(mainMessage, neptune::CRITICAL);
     }
     // https://sol2.readthedocs.io/en/latest/exceptions.html#exception-handling
-    int luaExceptionHandler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description) {
+    int Game::luaExceptionHandler(lua_State* L, sol::optional<const std::exception&> maybe_exception, sol::string_view description) {
         std::string msg = "An exception has occurred! Info: ";
         if (maybe_exception) {
             msg += "(from exception): ";
@@ -409,7 +412,7 @@ namespace neptune {
     {
         main_lua_state.open_libraries(sol::lib::base, sol::lib::math, sol::lib::os, sol::lib::table, sol::lib::io, sol::lib::debug, sol::lib::bit32, sol::lib::package, sol::lib::coroutine, sol::lib::ffi, sol::lib::jit, sol::lib::string);
         main_lua_state.set_panic(sol::c_call<decltype(&Game::luaError),Game::luaError>);
-        main_lua_state.set_exception_handler(&luaExceptionHandler);
+        main_lua_state.set_exception_handler(&Game::luaExceptionHandler);
         main_lua_state["print"] = [](sol::variadic_args args){
             game_log(doMsg(args));
         };
@@ -535,6 +538,8 @@ namespace neptune {
             }),
             "setTextEditable", &Text::setTextEditable,
             "inputFinished", &Text::inputFinished,
+            "textChanged", &Text::textChanged,
+            "changeFontSize", &Text::changeFontSize,
             sol::base_classes, sol::bases<neptune::Object>()
         );
         main_lua_state.new_usertype<neptune::Sprite>("Sprite",
@@ -763,7 +768,9 @@ namespace neptune {
                 }
                 std::string newFontName = fontName + std::to_string(size) + "pt";
                 std::cout << "Font: " << newFontName << "\n";
-                fonts.insert({newFontName, newFont});
+                if (fonts.find(newFontName) == fonts.end()) {
+                    fonts.insert({newFontName, newFont});
+                }
                 text.changeFont(newFontName);
                 tempTable["x"] = boxX + (boxW - textW) / 2;
                 tempTable["y"] = boxY + (boxH - textH) / 2;

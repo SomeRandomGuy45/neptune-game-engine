@@ -20,6 +20,7 @@ function M.init()
       --print(i, "Text:", v.text)
       local btnText = v.text
       local colorTag = v.color
+      local btnFontSize = tonumber(v._attr.fontSize)
       local btnColor = Color.new(tonumber(colorTag._attr.r),tonumber(colorTag._attr.g),tonumber(colorTag._attr.b),tonumber(colorTag._attr.a))
       local btnId = v._attr.buttonId
       local btnX = tonumber(v._attr.x)
@@ -28,9 +29,10 @@ function M.init()
       local btnH = tonumber(v._attr.h)
       print(btnText, btnX, btnY, btnW, btnH)
       buttons[btnId] = buttonLib:newButton(btnText, btnX, btnY, btnW, btnH, btnColor)
-      local func = buttonFuncs[btnId]
-      if func ~= nil then
-         print("Button: " .. btnID .. " , has a function! Adding now!")
+      buttons[btnId]:changeFontSize(btnFontSize)
+      local func = buttonFuncs.functions[btnId]
+      if func then
+         print("Button: " .. btnId .. ", has a function! Adding now!")
          buttons[btnId]:setMouseCallback(func)
       end
    end

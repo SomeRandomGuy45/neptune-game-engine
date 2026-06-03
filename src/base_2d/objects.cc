@@ -395,7 +395,7 @@ void Text::render(SDL_Renderer *renderer, int SCREEN_WIDTH, int SCREEN_HEIGHT, C
             game_log("Font is null!", neptune::FAULT);
             return;
         }
-        SDL_Surface* surface = TTF_RenderUTF8_Blended(fonts[fontName], text.c_str(), text_color);
+        SDL_Surface* surface = TTF_RenderUTF8_Blended_Wrapped(fonts[fontName], text.c_str(), text_color, w);
         if (!surface) {
             game_log("Couldn't as surface! SDL_Error: " + std::string(SDL_GetError()), neptune::FAULT);
             return;
@@ -432,6 +432,17 @@ void Text::setPosition(float _x, float _y)
 
 void Text::changeText(std::string newText) {
     text = newText;
+    DoEventCallback(TEXT_UPDATED);
+}
+
+void Text::changeFontSize(int size) {
+    TTF_Font* newFont = TTF_OpenFont(fontPaths[fontName].c_str(), size);
+    std::string newFontName = fontName + std::to_string(size) + "pt";
+    std::cout << "Font: " << newFontName << "\n";
+    if (fonts.find(newFontName) == fonts.end()) {
+        fonts.insert({newFontName, newFont});
+    }
+    changeFont(newFontName);
 }
 
 void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
@@ -444,8 +455,12 @@ void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
         game_log("Currently editing text: " + this->name + " original name: " + textOldName);
         SDL_StartTextInput();
         SDL_SetTextInputRect(&renderBoxRect);
-    } else if (callback == INPUT_FINISHED && isEditable && !textEvents.empty()) {
-        for (const auto& callback : textEvents) {
+    } else if (callback == INPUT_FINISHED && isEditable && !textEvents_INPUT_FINSIHED.empty()) {
+        for (const auto& callback : textEvents_INPUT_FINSIHED) {
+            callback();
+        }
+    } else if (callback == TEXT_UPDATED && !textEvents_TEXT_CHANGE.empty()) {
+        for (const auto& callback : textEvents_TEXT_CHANGE) {
             callback();
         }
     }

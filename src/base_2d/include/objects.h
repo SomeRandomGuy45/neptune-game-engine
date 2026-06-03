@@ -18,7 +18,8 @@ namespace neptune {
 
 enum NEPTUNE_CALLBACK {
     MOUSE = 0x00000001,
-    INPUT_FINISHED = 0x00000002
+    INPUT_FINISHED = 0x00000002,
+    TEXT_UPDATED = 0x00000003
 };
 
 enum NEPTUNE_MUSIC_STATE {
@@ -278,9 +279,11 @@ public:
     void setDim(float _w, float _h) { w = _w; h = _h; }
     void setTextEditable(bool newEditableSetting) { isEditable = newEditableSetting; }
     void setTextColor(SDL_Color newColor) { text_color = newColor; }
+    void changeFontSize(int size);
     void changeText(std::string newText);
     void changeFont(std::string newFont) { std::cout << "new font: " << newFont << "\n"; fontName = newFont; }
-    void inputFinished(sol::protected_function func) { textEvents.push_back(func); }
+    void inputFinished(sol::protected_function func) { textEvents_INPUT_FINSIHED.push_back(func); }
+    void textChanged(sol::protected_function func) { textEvents_TEXT_CHANGE.push_back(func); }
     void DoEventCallback(NEPTUNE_CALLBACK callback);
 
     std::string returnFontName() { return fontName; }
@@ -289,7 +292,8 @@ public:
 
     std::string name = "";
 private:
-    std::list<sol::protected_function> textEvents;
+    std::list<sol::protected_function> textEvents_INPUT_FINSIHED;
+    std::list<sol::protected_function> textEvents_TEXT_CHANGE;
     SDL_Texture* texture = nullptr;
     SDL_Rect renderBoxRect;
     float x, y, w, h;
