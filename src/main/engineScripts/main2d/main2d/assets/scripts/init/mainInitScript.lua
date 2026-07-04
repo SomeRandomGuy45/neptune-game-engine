@@ -39,6 +39,7 @@ function M.init()
    for _, v in pairs(buttons) do
       print(_, v)
    end
+   print(buttons)
    local btn1Vec = buttons["testButton"]:getPosition()
    print(btn1Vec:getMagnitude(buttons["testButton2"]:getPosition()))
    --[[

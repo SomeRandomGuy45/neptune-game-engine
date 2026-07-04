@@ -400,6 +400,16 @@ namespace neptune {
                 case sol::type::lua_nil:
                     message += "nil";
                     break;
+                case sol::type::table: {
+                    sol::table table = msg.get<sol::table>();
+                    table.push();
+                    const void* address = lua_topointer(table.lua_state(), -1);
+                    table.pop();
+                    std::ostringstream ss;
+                    ss << "table: " << address;
+                    message += ss.str();
+                    break;
+                }
                 default:
                     message += "<userdata>";
                     break;
