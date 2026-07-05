@@ -452,6 +452,8 @@ void Text::DoEventCallback(NEPTUNE_CALLBACK callback)
         this->name = randomStr(10);
         currentEditTextboxId = this->name;
         currentInputtedText = this->text;
+        currentInputtedText += '_';
+        changeText(currentInputtedText);
         game_log("Currently editing text: " + this->name + " original name: " + textOldName);
         SDL_StartTextInput();
         SDL_SetTextInputRect(&renderBoxRect);

@@ -237,7 +237,18 @@ namespace neptune {
                     }
                 }
                 if (e.type == SDL_TEXTINPUT && !currentEditTextboxId.empty()) {
+                    /*
+                    *   For our really cool text cursor thing
+                    *   We add a _ so we need to remove that before finsihing our string.. otherwise that'd be bad lol
+                    *   Imagine your string was H_e_l_l_o_ _W_o_r_l_d
+                    *   Not good!
+                    */
+                    // Simple check to pervent deleting random chars, when starting to type
+                    if (currentInputtedText[currentInputtedText.length() - 1] == '_') {
+                        currentInputtedText.pop_back();
+                    }
                     currentInputtedText += e.text.text;
+                    currentInputtedText += '_';
                     auto* variant = workspace.getDrawObject(currentEditTextboxId);
                     auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
                     textPtr->changeText(currentInputtedText);
@@ -250,6 +261,7 @@ namespace neptune {
                         SDL_StopTextInput();
                         auto* variant = workspace.getDrawObject(currentEditTextboxId);
                         auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
+                        currentInputtedText.pop_back();
                         textPtr->changeText(currentInputtedText);
                         textPtr->DoEventCallback(INPUT_FINISHED);
                         textPtr->name = textOldName;
@@ -261,9 +273,11 @@ namespace neptune {
                         textOldName = "";
                         currentEditTextboxId = "";
                     } else if (e.key.keysym.sym == SDLK_BACKSPACE) {
-                        if (!currentInputtedText.empty()) {
+                        if (!currentInputtedText.empty() && currentInputtedText != "_") {
+                            currentInputtedText.pop_back();
                             currentInputtedText.pop_back();
                         }
+                        currentInputtedText += '_';
                         auto* variant = workspace.getDrawObject(currentEditTextboxId);
                         auto& textPtr = std::get<std::unique_ptr<neptune::Text>>(*variant);
                         textPtr->changeText(currentInputtedText);
