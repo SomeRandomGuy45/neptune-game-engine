@@ -15,6 +15,7 @@
 #include <shared_mutex>
 #include <set>
 #include <queue>
+#include <tuple>
 #include <zip.h>
 
 #include "json.hpp"
@@ -262,7 +263,23 @@ namespace neptune {
 
     class ImGuiService {
     public:
+        // new object
+        void newWindow(const std::string& windowName, bool& passBool = false);
+        void newText(const std::string& text);
+        void newBtn(const std::string& btnText, sol::protected_function callbackFunc);
         
+        // end object
+        void endWindow();
+
+        // helpers
+        void sameLine();
+    private:
+        // return code, return string, will exit?
+        std::vector<std::tuple<int, std::string, bool>> returnCalls = {
+            {-1, "Internal Error", true},
+            {1, "Not running on update func! Expect GUI issues", false}
+        };
+        bool isRunningOnUpdateFunc = false;
     };
 
     class Game {
@@ -312,6 +329,7 @@ namespace neptune {
         SceneLoadingService sceneLoadingService;
         PlatformService platformService;
         LinkerService linkerService;
+        ImGuiService imGuiService;
     };
 
 } // namespace neptune

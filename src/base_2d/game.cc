@@ -1082,11 +1082,11 @@ namespace neptune {
                 }
                 if (objTypeEnum != objectTypes::NONE) {
                     std::unique_ptr<neptune::Object> newObj = nullptr;
+                    float x = node.attribute("x").as_float();
+                    float y = node.attribute("y").as_float();
                     switch (objTypeEnum) {
                         
                     case objectTypes::BOX: {
-                        float x = node.attribute("x").as_float();
-                        float y = node.attribute("y").as_float();
                         float w = node.attribute("w").as_float();
                         float h = node.attribute("h").as_float();
 
@@ -1113,8 +1113,6 @@ namespace neptune {
                     }
 
                     case objectTypes::SPRITE: {
-                        float x = node.attribute("x").as_float();
-                        float y = node.attribute("y").as_float();
                         float w = node.attribute("w").as_float();
                         float h = node.attribute("h").as_float();
                         std::string spritePath = node.attribute("path").as_string();
@@ -1128,8 +1126,6 @@ namespace neptune {
                     }
 
                     case objectTypes::TRIANGLE: {
-                        float x = node.attribute("x").as_float();
-                        float y = node.attribute("y").as_float();
                         float w = node.attribute("w").as_float();
                         float h = node.attribute("h").as_float();
 
@@ -1156,8 +1152,6 @@ namespace neptune {
                     }
 
                     case objectTypes::CIRCLE: {
-                        float x = node.attribute("x").as_float();
-                        float y = node.attribute("y").as_float();
                         float radius = node.attribute("r").as_float();
 
                         SDL_Color color = {255, 255, 255, 255};
@@ -1183,8 +1177,6 @@ namespace neptune {
                     }
 
                     case objectTypes::TEXT: {
-                        float x = node.attribute("x").as_float();
-                        float y = node.attribute("y").as_float();
                         float w = node.attribute("w").as_float();
                         float h = node.attribute("h").as_float();
                         std::string textStr = node.attribute("textStr").as_string();
