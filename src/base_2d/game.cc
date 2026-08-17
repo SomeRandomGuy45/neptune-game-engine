@@ -842,6 +842,7 @@ namespace neptune {
             game_log("Tried to call function thats only allowed in DEBUG!", neptune::CRITICAL);
             return;
         }
+        game_log("Debug only function, use ONLY is selective cases!", neptune::WARNING);
         zip_t* za;
         zip_stat_t fileStat;
         zip_file_t* file;
