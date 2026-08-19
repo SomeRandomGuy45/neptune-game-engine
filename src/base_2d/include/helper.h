@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <random>
+#include <map>
 
 /*
 * Lib stuff going to be RIPPED from simple

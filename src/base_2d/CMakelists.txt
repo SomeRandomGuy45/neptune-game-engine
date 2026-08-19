@@ -23,6 +23,7 @@ set(SOURCES
     imgui/imgui_widgets.cc
     imgui/imgui.cc
     imgui/imgui_demo.cc
+    services/ImGuiService.cc
 )
 
 
