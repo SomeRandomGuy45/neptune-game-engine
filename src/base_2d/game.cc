@@ -268,6 +268,7 @@ namespace neptune {
         if (Mix_Init(MIX_INIT_MP3 | MIX_INIT_FLAC) == 0) {
             game_log("Couldn't run Mix_Init! SDL_mixer Error: " + std::string(Mix_GetError()), neptune::CRITICAL);
         }
+        game_log("Loaded mixer");
         Mix_AllocateChannels(32);
         //fonts.insert({"FreeSans", TTF_OpenFont("FreeSans.ttf", 24)});
         for (const auto& [name, font] : fonts) {
